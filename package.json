@@ -1,9 +1,10 @@
 {
-  "name": "my-project",
+  "name": "bimbim-admin-dash",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "typecheck": "tsc --noEmit",
     "build": "next build",
     "start": "next start"
   },
