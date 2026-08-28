@@ -1,2 +1,5 @@
-import { SettingsPage } from '@/components/admin-pages'
-export default function Page() { return <SettingsPage /> }
+import { SettingsModule } from '@/components/settings/settings-module'
+
+export default function Page() {
+  return <SettingsModule />
+}
