@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Bell, Box, ChevronDown, LayoutDashboard, Menu, Settings, Truck, Users, X, MapPin } from 'lucide-react'
+import { Bell, Box, ChevronDown, LayoutDashboard, Menu, Settings, Truck, Users, X, MapPin, Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
 
@@ -20,12 +20,7 @@ export function AdminShell({ children, title, subtitle, action }: { children: Re
   const [today, setToday] = useState('')
 
   useEffect(() => {
-    setToday(new Intl.DateTimeFormat('fr-FR', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    }).format(new Date()))
+    setToday(new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date()))
   }, [])
 
   return <div className="min-h-screen bg-background text-foreground">
