@@ -1,0 +1,51 @@
+'use client'
+
+import Link from 'next/link'
+import { useMemo, useState } from 'react'
+import { AlertTriangle, ArrowRight, Check, Clock3, MapPin, MoreHorizontal, Search, Truck, UsersRound, X } from 'lucide-react'
+import { AdminShell, Avatar, MapCard, StatusBadge } from '@/components/layout/admin-shell'
+import { deliveries, kpis } from '@/lib/mock-data'
+import { cn } from '@/lib/utils'
+
+function Panel({ children, className }: { children: React.ReactNode; className?: string }) {
+  return <section className={cn('rounded-2xl border border-border bg-card shadow-[0_1px_2px_rgba(23,32,24,0.03)]', className)}>{children}</section>
+}
+
+function Kpi({ item, emphasis = false }: { item: typeof kpis[number]; emphasis?: boolean }) {
+  return <Panel className={cn('p-5', emphasis && 'border-warning/35 bg-warning/[0.035]')}>
+    <div className="flex items-start justify-between gap-3"><p className="text-sm text-muted-foreground">{item.label}</p><span className={cn('mt-1 size-2 rounded-full', item.tone === 'orange' ? 'bg-warning' : item.tone === 'blue' ? 'bg-info' : 'bg-primary-dark')} /></div>
+    <div className="mt-4 flex items-baseline gap-2"><strong className="text-3xl font-semibold tracking-tight">{item.value}</strong><span className={cn('rounded-md px-1.5 py-0.5 text-xs font-semibold', item.tone === 'orange' ? 'bg-warning/15 text-warning' : 'bg-primary/20 text-primary-dark')}>{item.change}</span></div>
+    <p className="mt-2 text-xs text-muted-foreground">{item.detail}</p>
+    {emphasis && <div className="mt-4 flex items-center gap-2 text-xs font-medium text-warning"><AlertTriangle className="size-3.5" /> 7 livraisons à vérifier maintenant</div>}
+  </Panel>
+}
+
+function PriorityRow({ href, tone, title, detail, meta }: { href: string; tone: 'warning' | 'danger'; title: string; detail: string; meta: string }) {
+  return <Link href={href} className="group flex items-start gap-3 rounded-xl border border-transparent p-3 transition-colors hover:border-border hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+    <span className={cn('mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg', tone === 'warning' ? 'bg-warning/15 text-warning' : 'bg-danger/15 text-danger')}><AlertTriangle className="size-4" /></span>
+    <span className="min-w-0 flex-1"><strong className="block text-sm">{title}</strong><span className="mt-1 block text-xs leading-5 text-muted-foreground">{detail}</span><span className="mt-2 block text-[11px] font-medium text-muted-foreground">{meta}</span></span>
+    <ArrowRight className="mt-2 size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
+  </Link>
+}
+
+export function DashboardOverview() {
+  const [query, setQuery] = useState('')
+  const [resolved, setResolved] = useState<string[]>([])
+  const visibleDeliveries = useMemo(() => deliveries.filter(d => `${d.id} ${d.client} ${d.from} ${d.to} ${d.courier}`.toLowerCase().includes(query.toLowerCase())).slice(0, 5), [query])
+  return <AdminShell title="Bonjour Campbell" subtitle="Voici ce qui se passe sur Bimbim aujourd’hui.">
+    <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-3"><div className="flex items-center gap-3"><span className="flex size-8 items-center justify-center rounded-lg bg-primary/20 text-primary-dark"><Check className="size-4" /></span><div><p className="text-sm font-semibold">Plateforme opérationnelle</p><p className="text-xs text-muted-foreground">Dernière mise à jour il y a 2 min</p></div></div><div className="flex flex-wrap gap-4 text-xs text-muted-foreground"><span><b className="text-foreground">24</b> en cours</span><span><b className="text-warning">7</b> à surveiller</span><span><b className="text-foreground">46</b> coursiers actifs</span></div></div>
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{kpis.map((item, i) => <Kpi key={item.label} item={item} emphasis={i === 1} />)}</div>
+    <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(330px,0.65fr)]">
+      <Panel className="min-w-0 overflow-hidden"><div className="flex flex-col gap-3 border-b border-border p-5 sm:flex-row sm:items-center sm:justify-between"><div><h2 className="text-base font-semibold">Livraisons récentes</h2><p className="mt-1 text-xs text-muted-foreground">Les 5 dernières opérations à suivre</p></div><div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 sm:w-56"><Search className="size-4 text-muted-foreground" /><input value={query} onChange={e => setQuery(e.target.value)} aria-label="Rechercher dans les livraisons récentes" placeholder="Rechercher..." className="min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:text-muted-foreground" />{query && <button aria-label="Effacer la recherche" onClick={() => setQuery('')}><X className="size-3.5 text-muted-foreground" /></button>}</div></div>
+        <div className="hidden border-b border-border bg-muted/35 px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground md:grid md:grid-cols-[100px_minmax(150px,1.2fr)_minmax(120px,1fr)_105px_75px_28px] md:gap-3"><span>ID</span><span>Trajet</span><span>Coursier</span><span>Statut</span><span>Âge</span><span /></div>
+        {visibleDeliveries.length ? <div>{visibleDeliveries.map(d => <div key={d.id} className="grid items-center gap-3 border-b border-border px-5 py-3.5 last:border-0 md:grid-cols-[100px_minmax(150px,1.2fr)_minmax(120px,1fr)_105px_75px_28px]">
+          <Link href={`/deliveries/${d.id}`} className="font-mono text-xs font-semibold text-primary-dark hover:underline">{d.id}</Link><div className="min-w-0"><p className="truncate text-sm font-medium">{d.from}</p><p className="truncate text-xs text-muted-foreground">{d.to}</p></div><div className="flex min-w-0 items-center gap-2"><Avatar initials={d.courier === '—' ? '?' : d.courier.split(' ').map(x => x[0]).join('')} color={d.courier === '—' ? 'bg-muted text-muted-foreground' : undefined} /><span className="truncate text-xs">{d.courier}</span></div><StatusBadge status={d.status} /><span className="text-xs text-muted-foreground">{d.time.replace('Il y a ', '')}</span><button aria-label={`Actions ${d.id}`} className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted"><MoreHorizontal className="size-4" /></button>
+        </div>)}</div> : <div className="flex flex-col items-center gap-2 px-5 py-12 text-center"><Search className="size-6 text-muted-foreground" /><p className="text-sm font-medium">Aucune livraison trouvée</p><p className="text-xs text-muted-foreground">Essayez avec un ID, un client ou une zone.</p></div>}
+        <div className="border-t border-border px-5 py-3"><Link href="/deliveries" className="text-xs font-semibold text-primary-dark hover:underline">Voir toutes les livraisons <span aria-hidden="true">→</span></Link></div>
+      </Panel>
+      <div className="flex flex-col gap-6"><Panel className="p-5"><div className="mb-3 flex items-start justify-between"><div><h2 className="text-base font-semibold">À surveiller</h2><p className="mt-1 text-xs text-muted-foreground">Actions qui demandent votre attention</p></div><span className="rounded-full bg-warning/15 px-2 py-1 text-[11px] font-semibold text-warning">2 alertes</span></div><div className="flex flex-col gap-1">{[['pending','warning','7 livraisons en attente','Depuis plus de 20 minutes','Yopougon · priorité haute'],['offline','danger','3 coursiers hors ligne','Zones à forte demande','Cocody, Plateau · maintenant']].map(([id,tone,title,detail,meta]) => resolved.includes(id) ? <div key={id} className="flex items-center gap-2 rounded-xl bg-primary/10 p-3 text-xs text-primary-dark"><Check className="size-4" /> Alerte traitée</div> : <div key={id} className="flex items-start gap-2"><PriorityRow href={tone === 'warning' ? '/deliveries' : '/couriers'} tone={tone as 'warning' | 'danger'} title={title} detail={detail} meta={meta} /><button aria-label={`Marquer ${title} comme traité`} onClick={() => setResolved(current => [...current, id])} className="mt-3 rounded-lg p-2 text-muted-foreground hover:bg-muted"><Check className="size-4" /></button></div>)}</div></Panel>
+        <Panel className="p-5"><div className="flex items-start justify-between"><div><h2 className="text-base font-semibold">Couverture terrain</h2><p className="mt-1 text-xs text-muted-foreground">Activité en temps réel</p></div><Link href="/couriers" className="text-xs font-semibold text-primary-dark hover:underline">Voir la flotte</Link></div><div className="mt-4 flex items-center gap-3 rounded-xl bg-muted/50 p-3"><span className="flex size-9 items-center justify-center rounded-lg bg-primary/20 text-primary-dark"><Truck className="size-4" /></span><div className="flex-1"><p className="text-sm font-semibold">46 coursiers actifs</p><p className="text-xs text-muted-foreground">18 disponibles pour une nouvelle course</p></div><span className="text-xs font-semibold text-primary-dark">56%</span></div></Panel></div>
+    </div>
+    <div className="mt-6 grid gap-6 xl:grid-cols-[1.2fr_0.8fr]"><Panel className="overflow-hidden"><div className="flex items-center justify-between border-b border-border p-5"><div><h2 className="text-base font-semibold">Activité géographique</h2><p className="mt-1 text-xs text-muted-foreground">Coursiers et demandes à Abidjan · actualisé maintenant</p></div><MapPin className="size-4 text-muted-foreground" /></div><MapCard compact /></Panel><Panel className="p-5"><h2 className="text-base font-semibold">Activité récente</h2><div className="mt-4 flex flex-col gap-4">{[['14:32','Awa Koné','a créé BMB-28491','/deliveries/BMB-28491'],['14:28','Mariam Bamba','a livré BMB-28490','/deliveries/BMB-28490'],['14:20','Système','a détecté une zone à forte demande','/couriers']].map(([time,actor,event,href]) => <Link href={href} key={time + actor} className="flex gap-3 rounded-lg hover:bg-muted"><span className="w-10 pt-0.5 font-mono text-[10px] text-muted-foreground">{time}</span><span className="flex size-2.5 shrink-0 translate-y-1 rounded-full bg-primary-dark ring-4 ring-primary/10" /><span className="text-xs leading-5"><b>{actor}</b> {event}</span></Link>)}</div></Panel></div>
+  </AdminShell>
+}
