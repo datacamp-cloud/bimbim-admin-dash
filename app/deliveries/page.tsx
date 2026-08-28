@@ -1,2 +1,2 @@
-import { DeliveriesPage } from '@/components/admin-pages'
-export default function Page() { return <DeliveriesPage /> }
+import { DeliveriesModulePage } from '@/components/deliveries/deliveries-module'
+export default function Page() { return <DeliveriesModulePage /> }

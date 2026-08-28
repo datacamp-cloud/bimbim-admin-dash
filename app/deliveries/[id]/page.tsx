@@ -1,2 +1,2 @@
-import { DeliveryDetailPage } from '@/components/admin-pages'
-export default async function Page() { return <DeliveryDetailPage /> }
+import { DeliveryModuleDetailPage } from '@/components/deliveries/deliveries-module'
+export default function Page() { return <DeliveryModuleDetailPage /> }
