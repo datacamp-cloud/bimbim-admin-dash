@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight, Check, ChevronDown, MoreHorizontal, Search, Slid
 import { AdminShell, Avatar, MapCard, SectionHeader, StatusBadge } from '@/components/layout/admin-shell'
 import { couriers, deliveries, kpis, notifications, timeline, users } from '@/lib/mock-data'
 import { cn } from '@/lib/utils'
+import { CouriersModule } from '@/components/couriers/couriers-module'
 
 function Card({ children, className }: { children: React.ReactNode; className?: string }) { return <div className={cn('rounded-2xl border border-border bg-card shadow-[0_1px_2px_rgba(23,32,24,0.02)]', className)}>{children}</div> }
 function SearchBar({ placeholder = 'Rechercher...' }: { placeholder?: string }) { return <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2.5 text-muted-foreground"><Search className="size-4" /><input aria-label={placeholder} placeholder={placeholder} className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground" /></div> }

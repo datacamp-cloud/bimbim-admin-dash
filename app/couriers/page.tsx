@@ -1,2 +1,5 @@
-import { CouriersPage } from '@/components/admin-pages'
-export default function Page() { return <CouriersPage /> }
+import { CouriersModule } from '@/components/couriers/couriers-module'
+
+export default function Page() {
+  return <CouriersModule />
+}
