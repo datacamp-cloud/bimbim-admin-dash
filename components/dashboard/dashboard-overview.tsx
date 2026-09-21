@@ -60,7 +60,7 @@ export function DashboardOverview({data}:{data:DashboardData}) {
         {[
           ['Total commandes',data.counters.commandes.toLocaleString('fr-FR'),'+12%',Package,'text-primary bg-primary/10'],
           ['Livraisons effectuées',data.counters.livraisons.toLocaleString('fr-FR'),'+15%',CheckCircle2,'text-success bg-success/10'],
-          ['Partenaires actifs',data.counters.clients.toLocaleString('fr-FR'),'+8%',UserRound,'text-info bg-info/10'],
+          ['Partenaires actifs',(data.counters as DashboardData['counters'] & { partners?: number }).partners?.toLocaleString('fr-FR') ?? data.counters.clients.toLocaleString('fr-FR'),'+8%',UserRound,'text-info bg-info/10'],
           ['Coursiers actifs',data.counters.onlineLivreurs.toLocaleString('fr-FR'),'+11%',Truck,'text-warning bg-warning/10'],
           ['Bimbim Pay · Solde global',money(data.revenue.current),'+'+delta+'%',CircleDollarSign,'text-primary bg-primary/10'],
         ].map(([label,value,change,Icon,tone])=><Panel key={String(label)} className="p-4"><div className="flex justify-between"><span className={cn('flex size-9 items-center justify-center rounded-xl',tone as string)}><Icon className="size-4"/></span><span className="flex h-fit items-center gap-1 rounded-full bg-success/10 px-2 py-1 text-[10px] font-semibold text-success"><TrendingUp className="size-3"/>{String(change)}</span></div><p className="mt-4 text-xs text-muted-foreground">{String(label)}</p><p className="mt-1 text-xl font-bold tracking-tight">{String(value)}</p></Panel>)}
