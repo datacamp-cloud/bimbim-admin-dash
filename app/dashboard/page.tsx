@@ -5,5 +5,5 @@ export const dynamic = 'force-dynamic'
 
 export default async function DashboardPage() {
   const data = await getAdminDashboardData()
-  return <DashboardOverview data={data} />
+  return <DashboardOverview data={data ?? undefined} />
 }
