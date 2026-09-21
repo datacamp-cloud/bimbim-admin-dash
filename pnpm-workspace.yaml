@@ -1,3 +1,7 @@
 minimumReleaseAgeExclude:
   - '@next/*'
   - next
+
+onlyBuiltDependencies:
+  - '@prisma/engines'
+  - prisma
