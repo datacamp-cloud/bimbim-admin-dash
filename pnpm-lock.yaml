@@ -3534,6 +3534,6 @@ snapshots:
 
   zod@3.25.76: {}
   chart.js@4.5.1:
-    resolution: {integrity: sha512-GIjfiT9dbmHRiYi6Nl2yFCq7kkwdkp1W/lp2J99rX0yo9tgJGn3lKQATztIjb5tVtevcBtIdICNWqlq5+E8/Pw==}
-    engines: {pnpm: '>=8'}
+    dependencies:
+      '@kurkle/color': 0.3.4
 
