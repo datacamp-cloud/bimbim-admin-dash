@@ -1253,7 +1253,7 @@ packages:
     engines: {node: '>=6'}
 
   leaflet@1.9.4:
-    resolution: {integrity: sha512-OQ1D4YJQ0VQ2zK4hZk0x5uQ6i7YQ1Y7w4Vv1rYh9yYc4G6f5nWm4sFfM4mW9dX9hQ5xgZ7vQ2vW6rR7cQ5w==}
+    resolution: {integrity: sha512-nxS1ynzJOmOlHp+iL3FyWqK89GtNL8U8rvlMOsQdTTssxZwCXh8N2NB3GDQOL+YR3XnWyZAxwQixURb+FA74PA==}
 
   leaflet@1.9.4: {}
 
