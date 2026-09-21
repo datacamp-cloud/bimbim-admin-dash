@@ -51,7 +51,7 @@ export function AdminShell({ children, title, subtitle, action }: { children: Re
         <a href={BIMBIM_WEBSITE_URL} className="group flex items-center gap-3" aria-label="Bimbim">
           <span className="flex h-10 w-[116px] items-center overflow-hidden rounded-lg"><img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo-without-bg2-qlNlsreNIjCCrlqZNvED14ELbeLXEf.png" alt="bimbim" className="h-auto w-full object-contain" /></span>
         </a>
-        <button className="rounded-lg p-2 hover:bg-sidebar-accent lg:hidden" aria-label="Fermer" onClick={() => setOpen(false)}><X /></button>
+        <button className="rounded-lg p-2 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 lg:hidden" aria-label="Fermer" onClick={() => setOpen(false)}><X /></button>
       </div>
       <p className="mt-1 px-3 text-[10px] font-medium text-muted-foreground">Espace administrateur</p>
 
@@ -73,8 +73,8 @@ export function AdminShell({ children, title, subtitle, action }: { children: Re
 
       <div className="flex flex-col gap-2 border-t border-sidebar-border pt-4">
         <div className="rounded-xl bg-sidebar-accent p-3"><p className="text-xs font-semibold">Besoin d’aide ?</p><p className="mt-1 text-[11px] leading-4 text-muted-foreground">Contactez le support Bimbim.</p><a href="mailto:support@bimbim.ci" className="mt-2 inline-block text-[11px] font-semibold text-primary hover:underline">Contacter le support</a></div>
-        <a href={BIMBIM_WEBSITE_URL} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-primary"><ExternalLink className="size-[17px]" />Voir le site Bimbim</a>
-        <button className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-sidebar-accent">
+        <a href={BIMBIM_WEBSITE_URL} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><ExternalLink className="size-[17px]" />Voir le site Bimbim</a>
+        <button className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
           <span className="flex size-8 items-center justify-center rounded-full bg-[#D8A77C] text-xs font-semibold text-white">CM</span>
           <span className="flex-1"><span className="block text-sm font-medium">Campbell M.</span><span className="block text-xs text-muted-foreground">Administrateur</span></span>
           <ChevronDown className="size-4 text-muted-foreground" />
@@ -87,13 +87,13 @@ export function AdminShell({ children, title, subtitle, action }: { children: Re
     <div className="lg:pl-64">
       <header className="sticky top-0 z-20 flex h-20 items-center justify-between border-b border-border bg-background/95 px-5 backdrop-blur md:px-8">
         <div className="flex items-center gap-3">
-          <button className="rounded-lg p-2 hover:bg-muted lg:hidden" aria-label="Ouvrir" onClick={() => setOpen(true)}><Menu /></button>
+          <button className="rounded-lg p-2 transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 lg:hidden" aria-label="Ouvrir" onClick={() => setOpen(true)}><Menu /></button>
           <div><p className="text-xs text-muted-foreground" suppressHydrationWarning>{today}</p><p className="text-sm font-semibold">Bonjour Campbell</p></div>
         </div>
         <div className="flex items-center gap-3">
           <span className="hidden items-center gap-1.5 rounded-full bg-success/10 px-2.5 py-1 text-[11px] font-semibold text-success sm:flex"><i className="size-1.5 rounded-full bg-success" />En ligne</span>
-          <button className="relative rounded-xl p-2.5 text-muted-foreground hover:bg-muted" aria-label="Notifications"><Bell className="size-5" /><span className="absolute right-1.5 top-1.5 flex size-4 items-center justify-center rounded-full bg-danger text-[9px] font-bold text-white">3</span></button>
-          <button className="rounded-xl p-2.5 text-muted-foreground hover:bg-muted" aria-label="Messages"><MessageSquare className="size-5" /></button>
+          <button className="relative rounded-xl p-2.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50" aria-label="Notifications"><Bell className="size-5" /><span className="absolute right-1.5 top-1.5 flex size-4 items-center justify-center rounded-full bg-danger text-[9px] font-bold text-white">3</span></button>
+          <button className="rounded-xl p-2.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50" aria-label="Messages"><MessageSquare className="size-5" /></button>
           {action}<span className="hidden h-8 w-px bg-border sm:block" /><div className="flex size-9 items-center justify-center rounded-full bg-[#D8A77C] text-xs font-semibold text-white">CM</div>
         </div>
       </header>
@@ -106,7 +106,7 @@ export function AdminShell({ children, title, subtitle, action }: { children: Re
   </div>
 }
 
-export function SectionHeader({ title, link }: { title: string; link?: string }) { return <div className="mb-4 flex items-center justify-between"><h2 className="text-base font-semibold">{title}</h2>{link && <Link href={link} className="text-sm font-medium text-primary hover:underline">Voir tout <span aria-hidden>→</span></Link>}</div> }
+export function SectionHeader({ title, link }: { title: string; link?: string }) { return <div className="mb-4 flex items-center justify-between"><h2 className="text-base font-semibold">{title}</h2>{link && <Link href={link} className="rounded-md text-sm font-medium text-primary transition-colors hover:text-primary-dark hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Voir tout <span aria-hidden>→</span></Link>}</div> }
 export function StatusBadge({ status }: { status: string }) { const tone = status === 'Livrée' || status === 'Disponible' || status === 'Actif' ? 'status-success' : status === 'En attente' || status === 'Hors ligne' ? 'status-warning' : status === 'Annulée' ? 'status-danger' : 'status-info'; return <span className={cn('status-badge', tone)}><span className="size-1.5 rounded-full bg-current" />{status}</span> }
 export function Avatar({ initials, color = 'bg-[#D8A77C]' }: { initials: string; color?: string }) { return <span className={cn('flex size-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white', color)}>{initials}</span> }
 export function MapCard({ compact = false }: { compact?: boolean }) { return <div className={cn('map-surface relative overflow-hidden rounded-2xl border border-border', compact ? 'h-72' : 'h-80')}><div className="map-road road-a"/><div className="map-road road-b"/><div className="map-road road-c"/><div className="map-zone zone-a"/><div className="map-zone zone-b"/><div className="map-label label-a">Cocody</div><div className="map-label label-b">Plateau</div><div className="map-label label-c">Marcory</div></div> }
