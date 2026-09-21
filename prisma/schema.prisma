@@ -1,0 +1,790 @@
+// schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum AdminRole {
+  super_admin
+  support
+  moderateur
+}
+
+enum AdminStatut {
+  actif
+  inactif
+  suspendu
+}
+
+enum ClientType {
+  particulier
+  entreprise
+}
+
+enum TypeDocumentClient {
+  cni
+  passeport
+  permis
+  autre
+}
+
+enum StatutDocumentClient {
+  en_attente
+  verifie
+  rejete
+}
+
+enum ModeInscription {
+  acces_direct
+  recherche_google
+  reseaux_sociaux
+  recommandation
+  campagne
+  autre
+}
+
+enum ClientStatut {
+  actif
+  inactif
+  bloque
+}
+
+enum ActeurType {
+  client
+  livreur
+  systeme
+}
+
+enum WalletStatut {
+  actif
+  bloque
+}
+
+enum TypeTransaction {
+  credit
+  debit
+  commission
+  bonus
+  ajustement
+}
+
+enum MoyenPaiement {
+  wallet
+  mobile_money
+  carte
+  systeme
+}
+
+enum StatutTransaction {
+  reussi
+  en_attente
+  echoue
+}
+
+enum NomService {
+  colis
+  nourriture
+  plis
+  gros_article
+}
+
+enum StatutActifInactif {
+  actif
+  inactif
+}
+
+enum NomEngin {
+  moto
+  voiture
+  tricycle
+  camionnette
+  velo
+}
+
+enum StatutCompteLivreur {
+  actif
+  en_verification
+  suspendu
+  inactif
+}
+
+enum TypeCommande {
+  simple
+  groupee
+  programmee
+}
+
+enum StatutCommande {
+  en_attente
+  en_cours
+  terminee
+  annulee
+}
+
+enum StatutLivraison {
+  en_attente
+  en_cours
+  livre
+  retour
+  echec
+}
+
+enum TypeSegment {
+  ramassage
+  transfert
+  livraison
+}
+
+enum StatutSegment {
+  assigne
+  en_cours
+  termine
+  annule
+}
+
+enum ModeArrondi {
+  floor
+  ceil
+  round
+}
+
+enum SourceParametre {
+  systeme
+  promo
+  admin
+}
+
+enum TypePromotion {
+  points
+  livraisons_gratuites
+  reduction
+  cashback
+}
+
+enum StatutParrainage {
+  inscrit
+  actif
+  bonus_attribue
+}
+
+enum TypeOperationPoints {
+  gain
+  retrait
+  parrainage
+  promo
+}
+
+enum TypeOperationGratuite {
+  attribution
+  utilisation
+}
+
+enum StatutRetour {
+  valide
+  en_attente
+  rejete
+}
+
+enum StatutLecture {
+  vu
+  non_vu
+}
+
+enum StatutTracking {
+  online
+  offline
+}
+
+enum UserTypeNotif {
+  client
+  livreur
+  admin
+}
+
+enum CanalNotification {
+  sms
+  push
+  email
+}
+
+enum StatutEnvoiNotification {
+  envoye
+  echec
+  en_attente
+}
+
+enum NiveauLog {
+  info
+  warning
+  error
+}
+
+enum StatutPaiementMobileMoney {
+  reussi
+  echec
+  en_attente
+}
+
+enum ResultatTentative {
+  reussi
+  echec
+  client_absent
+  introuvable
+}
+
+// ==========================================
+// MODELS
+// ==========================================
+
+model Administrateur {
+  id               Int         @id @default(autoincrement())
+  nom              String      @db.VarChar(100)
+  email            String      @unique @db.VarChar(100)
+  login            String      @unique @db.VarChar(50)
+  mot_de_passe     String      @db.VarChar(255)
+  role             AdminRole
+  connecte         Boolean     @default(false)
+  date_connexion   DateTime?
+  date_deconnexion DateTime?
+  ip_connexion     String?     @db.VarChar(45)
+  token_reset      String?     @db.VarChar(255)
+  statut           AdminStatut @default(actif)
+  date_creation    DateTime    @default(now())
+  date_maj         DateTime    @updatedAt
+  firebase_uid     String?     @unique
+
+  wallets_verrouilles Wallet[]          @relation("WalletVerrouillePar")
+  retours_valides     RetourLivraison[] @relation("AdminValidationRetour")
+  audit_actions       AuditAction[]
+
+  @@map("administrateurs")
+}
+
+model Client {
+  id                   Int              @id @default(autoincrement())
+  type_client          ClientType       @default(particulier)
+  nom                  String?          @db.VarChar(150)
+  photo                String?          @db.VarChar(255)
+  email                String?          @unique @db.VarChar(100)
+  telephone            String           @db.VarChar(20)
+  mot_de_passe         String           @db.VarChar(255)
+  adresse_principale   String?          @db.Text
+  latitude             Decimal?         @db.Decimal(10, 6)
+  longitude            Decimal?         @db.Decimal(10, 6)
+  est_verifie          Boolean          @default(false)
+  date_verification    DateTime?
+  mode_inscription     ModeInscription?
+  points_cumules       Int              @default(0)
+  livraisons_gratuites Int              @default(0)
+  code_parrainage      String?          @db.VarChar(50)
+  parrain_id           Int?
+  parrain              Client?          @relation("ParrainageClient", fields: [parrain_id], references: [id])
+  filleuls             Client[]         @relation("ParrainageClient")
+  statut               ClientStatut     @default(actif)
+  date_creation        DateTime         @default(now())
+  date_maj             DateTime         @updatedAt
+  firebase_uid         String?          @unique
+
+  commandes                        Commande[]
+  livraisons_expediees             Livraison[]                   @relation("ClientExpediteur")
+  livraisons_recues                Livraison[]                   @relation("ClientDestinataire")
+  notations                        Notation[]
+  parrainages_parrain              Parrainage[]                  @relation("ParrainageParrain")
+  parrainages_filleul              Parrainage[]                  @relation("ParrainageFilleul")
+  historiques_points               HistoriquePoints[]
+  historiques_livraisons_gratuites HistoriqueLivraisonGratuite[]
+
+  documents DocumentClient[]
+
+  @@index([telephone])
+  @@map("clients")
+}
+
+model DocumentClient {
+  id        Int    @id @default(autoincrement())
+  client_id Int
+  client    Client @relation(fields: [client_id], references: [id], onDelete: Cascade)
+
+  type_document  TypeDocumentClient
+  nom_fichier    String             @db.VarChar(255)
+  chemin_fichier String             @db.VarChar(500)
+  mime_type      String             @db.VarChar(100)
+  taille         Int
+
+  statut StatutDocumentClient @default(en_attente)
+
+  date_creation DateTime @default(now())
+  date_maj      DateTime @updatedAt
+
+  @@index([client_id])
+  @@map("documents_clients")
+}
+
+model Wallet {
+  id                Int             @id @default(autoincrement())
+  proprietaire_type ActeurType
+  proprietaire_id   Int
+  solde             Decimal         @default(0) @db.Decimal(10, 2)
+  devise            String          @default("XOF") @db.VarChar(10)
+  statut            WalletStatut    @default(actif)
+  verrouille_par    Int?
+  administrateur    Administrateur? @relation("WalletVerrouillePar", fields: [verrouille_par], references: [id])
+  date_creation     DateTime        @default(now())
+  date_maj          DateTime        @updatedAt
+
+  transactions Transaction[]
+
+  @@map("wallets")
+}
+
+model Transaction {
+  id               Int               @id @default(autoincrement())
+  wallet_id        Int
+  wallet           Wallet            @relation(fields: [wallet_id], references: [id])
+  commande_id      Int?
+  commande         Commande?         @relation(fields: [commande_id], references: [id])
+  livraison_id     Int?
+  livraison        Livraison?        @relation(fields: [livraison_id], references: [id])
+  montant          Decimal           @db.Decimal(10, 2)
+  type_transaction TypeTransaction
+  solde_avant      Decimal           @db.Decimal(10, 2)
+  solde_apres      Decimal           @db.Decimal(10, 2)
+  reference        String            @unique @db.VarChar(100)
+  moyen_paiement   MoyenPaiement
+  description      String?           @db.Text
+  meta_json        Json?
+  statut           StatutTransaction @default(en_attente)
+  date_operation   DateTime          @default(now())
+
+  paiements_mobile_money PaiementMobileMoney[]
+
+  @@map("transactions")
+}
+
+model Service {
+  id            Int                @id @default(autoincrement())
+  nom_service   NomService
+  logo_service  String?            @db.VarChar(255)
+  description   String?            @db.Text
+  tarif_base    Decimal            @db.Decimal(10, 2)
+  cout_par_km   Decimal            @db.Decimal(10, 2)
+  statut        StatutActifInactif @default(actif)
+  date_creation DateTime           @default(now())
+  date_maj      DateTime           @updatedAt
+
+  services_engins ServiceEngin[]
+  livraisons      Livraison[]
+  tarifs_zones    TarifZone[]
+
+  @@map("services")
+}
+
+model TypeEngin {
+  id              Int                @id @default(autoincrement())
+  nom             NomEngin
+  description     String?            @db.Text
+  capacite_max_kg Decimal?           @db.Decimal(10, 2)
+  volume_max_m3   Decimal?           @db.Decimal(10, 2)
+  statut          StatutActifInactif @default(actif)
+  date_creation   DateTime           @default(now())
+  date_maj        DateTime           @updatedAt
+
+  services_engins ServiceEngin[]
+  livreurs        Livreur[]
+  tarifs_zones    TarifZone[]
+
+  @@map("types_engins")
+}
+
+model ServiceEngin {
+  id            Int                @id @default(autoincrement())
+  service_id    Int
+  service       Service            @relation(fields: [service_id], references: [id])
+  type_engin_id Int
+  type_engin    TypeEngin          @relation(fields: [type_engin_id], references: [id])
+  statut        StatutActifInactif @default(actif)
+  date_creation DateTime           @default(now())
+
+  @@map("services_engins")
+}
+
+model Livreur {
+  id                  Int                 @id @default(autoincrement())
+  matricule           String?             @db.VarChar(50)
+  pseudo              String              @db.VarChar(50)
+  nom                 String              @db.VarChar(150)
+  prenom              String              @db.VarChar(150)
+  telephone           String              @db.VarChar(20)
+  genre               String?             @db.VarChar(10)
+  photo               String?             @db.VarChar(255)
+  cni                 String?             @db.VarChar(255)
+  permis              String?             @db.VarChar(255)
+  mot_de_passe        String              @db.VarChar(255)
+  type_engin_id       Int
+  type_engin          TypeEngin           @relation(fields: [type_engin_id], references: [id])
+  immatriculation     String?             @db.VarChar(50)
+  disponibilite       Boolean             @default(false)
+  note_moyenne        Decimal             @default(0) @db.Decimal(3, 2)
+  statut_compte       StatutCompteLivreur @default(en_verification)
+  geolocalisation_lat Decimal?            @db.Decimal(10, 6)
+  geolocalisation_lng Decimal?            @db.Decimal(10, 6)
+  adresse             String?             @db.Text
+  token_fcm           String?             @db.VarChar(255)
+  date_creation       DateTime            @default(now())
+  date_maj            DateTime            @updatedAt
+  firebase_uid        String?             @unique
+
+  segments_source       SegmentLivraison[]   @relation("LivreurSource")
+  segments_destinataire SegmentLivraison[]   @relation("LivreurDestinataire")
+  notations             Notation[]
+  retours_livraisons    RetourLivraison[]
+  tentatives_livraisons TentativeLivraison[]
+  positions             PositionLivreur[]
+
+  @@map("livreurs")
+}
+
+model Commande {
+  id                 Int            @id @default(autoincrement())
+  client_id          Int?
+  client             Client?        @relation(fields: [client_id], references: [id])
+  type_commande      TypeCommande   @default(simple)
+  description        String?        @db.Text
+  service_type       String?        @db.VarChar(50)
+  adresse_enlevement String?        @db.Text
+  adresse_livraison  String?        @db.Text
+  date_recuperation  DateTime?
+  telephone_contact  String?        @db.VarChar(20)
+  email_contact      String?        @db.VarChar(100)
+  total_livraisons   Int            @default(0)
+  total_montant      Decimal        @default(0) @db.Decimal(10, 2)
+  total_points       Int            @default(0)
+  statut             StatutCommande @default(en_attente)
+  date_creation      DateTime       @default(now())
+  date_maj           DateTime       @updatedAt
+
+  livraisons   Livraison[]
+  transactions Transaction[]
+
+  @@map("commandes")
+}
+
+model Livraison {
+  id                     Int             @id @default(autoincrement())
+  commande_id            Int
+  commande               Commande        @relation(fields: [commande_id], references: [id])
+  client_expediteur_id   Int
+  client_expediteur      Client          @relation("ClientExpediteur", fields: [client_expediteur_id], references: [id])
+  client_destinataire_id Int?
+  client_destinataire    Client?         @relation("ClientDestinataire", fields: [client_destinataire_id], references: [id])
+  nom_destinataire       String          @db.VarChar(150)
+  telephone_destinataire String          @db.VarChar(20)
+  service_id             Int
+  service                Service         @relation(fields: [service_id], references: [id])
+  adresse_ramassage      String          @db.Text
+  adresse_livraison      String          @db.Text
+  observation            String?         @db.Text
+  poids                  Decimal?        @db.Decimal(10, 2)
+  volume                 Decimal?        @db.Decimal(10, 2)
+  distance_km            Decimal?        @db.Decimal(10, 2)
+  duree_estimee_min      Int?
+  prix                   Decimal         @db.Decimal(10, 2)
+  points_gagnes          Int             @default(0)
+  est_gratuite           Boolean         @default(false)
+  heure_souhaitee        DateTime?
+  photo_preuve_finale    String?         @db.VarChar(255)
+  signature_client       String?         @db.VarChar(255)
+  statut                 StatutLivraison @default(en_attente)
+  date_creation          DateTime        @default(now())
+  date_maj               DateTime        @updatedAt
+
+  segments                         SegmentLivraison[]
+  notations                        Notation[]
+  transactions                     Transaction[]
+  historiques_points               HistoriquePoints[]
+  historiques_livraisons_gratuites HistoriqueLivraisonGratuite[]
+  retours                          RetourLivraison[]
+  relances                         RetourRelance[]
+  annulations                      AnnulationLivraison[]
+  tentatives                       TentativeLivraison[]
+
+  @@map("livraisons")
+}
+
+model SegmentLivraison {
+  id                      Int           @id @default(autoincrement())
+  livraison_id            Int
+  livraison               Livraison     @relation(fields: [livraison_id], references: [id])
+  type_segment            TypeSegment
+  livreur_source_id       Int?
+  livreur_source          Livreur?      @relation("LivreurSource", fields: [livreur_source_id], references: [id])
+  livreur_destinataire_id Int?
+  livreur_destinataire    Livreur?      @relation("LivreurDestinataire", fields: [livreur_destinataire_id], references: [id])
+  adresse_depart          String        @db.Text
+  adresse_arrivee         String        @db.Text
+  distance_segment_km     Decimal?      @db.Decimal(10, 2)
+  cout_segment            Decimal?      @db.Decimal(10, 2)
+  date_debut              DateTime?
+  date_fin                DateTime?
+  statut                  StatutSegment @default(assigne)
+  preuve_livraison        String?       @db.VarChar(255)
+  ordre_segment           Int
+
+  @@map("segments_livraisons")
+}
+
+model Notation {
+  id              Int       @id @default(autoincrement())
+  livraison_id    Int
+  livraison       Livraison @relation(fields: [livraison_id], references: [id])
+  livreur_id      Int
+  livreur         Livreur   @relation(fields: [livreur_id], references: [id])
+  client_id       Int
+  client          Client    @relation(fields: [client_id], references: [id])
+  note            Int
+  commentaire     String?   @db.Text
+  date_evaluation DateTime  @default(now())
+
+  @@map("notations")
+}
+
+model ParametrePoints {
+  id           Int             @id @default(autoincrement())
+  coefficient  Decimal         @db.Decimal(10, 4)
+  mode_arrondi ModeArrondi
+  source       SourceParametre
+  date_debut   DateTime
+  date_fin     DateTime?
+  actif        Boolean         @default(true)
+  description  String?         @db.Text
+
+  @@map("parametres_points")
+}
+
+model Promotion {
+  id                     Int           @id @default(autoincrement())
+  code                   String        @unique @db.VarChar(50)
+  nom_promotion          String        @db.VarChar(150)
+  type_promotion         TypePromotion
+  valeur                 Int
+  seuil_points           Int?
+  usage_manuel           Boolean       @default(false)
+  delai_expiration_jours Int?
+  date_debut             DateTime
+  date_fin               DateTime
+  quota_attribution      Int?
+  actif                  Boolean       @default(true)
+  conditions_json        Json?
+  date_creation          DateTime      @default(now())
+  date_maj               DateTime      @updatedAt
+
+  historiques_points               HistoriquePoints[]
+  historiques_livraisons_gratuites HistoriqueLivraisonGratuite[]
+
+  @@map("promotions")
+}
+
+model Parrainage {
+  id                         Int              @id @default(autoincrement())
+  parrain_id                 Int
+  parrain                    Client           @relation("ParrainageParrain", fields: [parrain_id], references: [id])
+  filleul_id                 Int?
+  filleul                    Client?          @relation("ParrainageFilleul", fields: [filleul_id], references: [id])
+  code_parrainage            String           @db.VarChar(50)
+  points_parrain_attribution Int              @default(0)
+  points_filleul_attribution Int              @default(0)
+  seuil_points_filleul       Int?
+  date_inscription           DateTime?
+  date_activation            DateTime?
+  statut                     StatutParrainage @default(inscrit)
+  date_creation              DateTime         @default(now())
+
+  @@map("parrainages")
+}
+
+model HistoriquePoints {
+  id             Int                 @id @default(autoincrement())
+  client_id      Int
+  client         Client              @relation(fields: [client_id], references: [id])
+  livraison_id   Int?
+  livraison      Livraison?          @relation(fields: [livraison_id], references: [id])
+  promotion_id   Int?
+  promotion      Promotion?          @relation(fields: [promotion_id], references: [id])
+  points         Int
+  type_operation TypeOperationPoints
+  commentaire    String?             @db.Text
+  date_operation DateTime            @default(now())
+
+  @@map("historiques_points")
+}
+
+model HistoriqueLivraisonGratuite {
+  id                Int                   @id @default(autoincrement())
+  client_id         Int
+  client            Client                @relation(fields: [client_id], references: [id])
+  livraison_id      Int?
+  livraison         Livraison?            @relation(fields: [livraison_id], references: [id])
+  promotion_id      Int?
+  promotion         Promotion?            @relation(fields: [promotion_id], references: [id])
+  nombre_livraisons Int
+  type_operation    TypeOperationGratuite
+  date_operation    DateTime              @default(now())
+
+  @@map("historiques_livraisons_gratuites")
+}
+
+model RetourLivraison {
+  id                  Int             @id @default(autoincrement())
+  livraison_id        Int
+  livraison           Livraison       @relation(fields: [livraison_id], references: [id])
+  livreur_id          Int
+  livreur             Livreur         @relation(fields: [livreur_id], references: [id])
+  motif               String?         @db.Text
+  photo_preuve        String?         @db.VarChar(255)
+  date_retour         DateTime        @default(now())
+  cause_systeme       Boolean         @default(false)
+  id_admin_validation Int?
+  admin_validation    Administrateur? @relation("AdminValidationRetour", fields: [id_admin_validation], references: [id])
+  statut              StatutRetour    @default(en_attente)
+
+  @@map("retours_livraisons")
+}
+
+model RetourRelance {
+  id             Int           @id @default(autoincrement())
+  livraison_id   Int
+  livraison      Livraison     @relation(fields: [livraison_id], references: [id])
+  type_relance   ActeurType
+  message        String?       @db.Text
+  statut_lecture StatutLecture @default(non_vu)
+  date_relance   DateTime      @default(now())
+
+  @@map("retours_relances")
+}
+
+model Zone {
+  id            Int     @id @default(autoincrement())
+  nom_zone      String  @db.VarChar(100)
+  ville         String  @db.VarChar(100)
+  zone_geo_json Json?
+  actif         Boolean @default(true)
+
+  tarifs_zones_depart  TarifZone[] @relation("ZoneDepart")
+  tarifs_zones_arrivee TarifZone[] @relation("ZoneArrivee")
+
+  @@map("zones")
+}
+
+model TarifZone {
+  id              Int       @id @default(autoincrement())
+  service_id      Int
+  service         Service   @relation(fields: [service_id], references: [id])
+  type_engin_id   Int
+  type_engin      TypeEngin @relation(fields: [type_engin_id], references: [id])
+  zone_depart_id  Int
+  zone_depart     Zone      @relation("ZoneDepart", fields: [zone_depart_id], references: [id])
+  zone_arrivee_id Int
+  zone_arrivee    Zone      @relation("ZoneArrivee", fields: [zone_arrivee_id], references: [id])
+  montant_base    Decimal   @db.Decimal(10, 2)
+  cout_par_km     Decimal   @db.Decimal(10, 2)
+  actif           Boolean   @default(true)
+
+  @@map("tarifs_zones")
+}
+
+model PositionLivreur {
+  id              Int            @id @default(autoincrement())
+  livreur_id      Int
+  livreur         Livreur        @relation(fields: [livreur_id], references: [id])
+  latitude        Decimal        @db.Decimal(10, 6)
+  longitude       Decimal        @db.Decimal(10, 6)
+  vitesse         Decimal?       @db.Decimal(10, 2)
+  statut_tracking StatutTracking @default(offline)
+  date_maj        DateTime       @updatedAt
+
+  @@map("positions_livreurs")
+}
+
+model Notification {
+  id                Int                     @id @default(autoincrement())
+  user_type         UserTypeNotif
+  user_id           Int
+  type_notification CanalNotification
+  titre             String                  @db.VarChar(150)
+  message           String                  @db.Text
+  statut_envoi      StatutEnvoiNotification @default(en_attente)
+  date_envoi        DateTime                @default(now())
+
+  @@map("notifications")
+}
+
+model LogSysteme {
+  id        Int       @id @default(autoincrement())
+  categorie String    @db.VarChar(100)
+  niveau    NiveauLog
+  message   String    @db.Text
+  meta_json Json?
+  date_log  DateTime  @default(now())
+
+  @@map("logs_systeme")
+}
+
+model PaiementMobileMoney {
+  id                  Int                       @id @default(autoincrement())
+  transaction_id      Int
+  transaction         Transaction               @relation(fields: [transaction_id], references: [id])
+  operateur           String                    @db.VarChar(50)
+  reference_operateur String                    @db.VarChar(100)
+  montant             Decimal                   @db.Decimal(10, 2)
+  statut              StatutPaiementMobileMoney @default(en_attente)
+  raw_payload         Json?
+  date_callback       DateTime?
+
+  @@map("paiements_mobile_money")
+}
+
+model AnnulationLivraison {
+  id              Int        @id @default(autoincrement())
+  livraison_id    Int
+  livraison       Livraison  @relation(fields: [livraison_id], references: [id])
+  acteur          ActeurType
+  motif           String?    @db.Text
+  remboursement   Boolean    @default(false)
+  date_annulation DateTime   @default(now())
+
+  @@map("annulations_livraisons")
+}
+
+model TentativeLivraison {
+  id             Int               @id @default(autoincrement())
+  livraison_id   Int
+  livraison      Livraison         @relation(fields: [livraison_id], references: [id])
+  livreur_id     Int
+  livreur        Livreur           @relation(fields: [livreur_id], references: [id])
+  resultat       ResultatTentative
+  commentaire    String?           @db.Text
+  date_tentative DateTime          @default(now())
+
+  @@map("tentatives_livraisons")
+}
+
+model AuditAction {
+  id              Int            @id @default(autoincrement())
+  admin_id        Int
+  administrateur  Administrateur @relation(fields: [admin_id], references: [id])
+  action          String         @db.VarChar(150)
+  table_cible     String         @db.VarChar(100)
+  id_cible        Int
+  ancienne_valeur Json?
+  nouvelle_valeur Json?
+  date_action     DateTime       @default(now())
+
+  @@map("audit_actions")
+}
