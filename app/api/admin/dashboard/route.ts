@@ -45,12 +45,20 @@ export async function GET() {
         select: {
           id: true, statut: true, total_montant: true, date_creation: true, total_livraisons: true,
           client: { select: { nom: true } },
-          livraisons: { take: 1, orderBy: { date_creation: 'asc' }, select: {
-            segments: { take: 1, orderBy: { ordre_segment: 'asc' }, select: {
-              livreur_destinataire: { select: { nom: true, prenom: true } },
-              livreur_source: { select: { nom: true, prenom: true } },
-            }
-          }}
+          livraisons: {
+            take: 1,
+            orderBy: { date_creation: 'asc' },
+            select: {
+              segments: {
+                take: 1,
+                orderBy: { ordre_segment: 'asc' },
+                select: {
+                  livreur_destinataire: { select: { nom: true, prenom: true } },
+                  livreur_source: { select: { nom: true, prenom: true } },
+                },
+              },
+            },
+          },
         }
       }),
       prisma.transaction.findMany({ where: { statut: 'reussi' }, orderBy: { date_operation: 'desc' }, take: 5, select: { id: true, montant: true, type_transaction: true, statut: true, date_operation: true } }),
