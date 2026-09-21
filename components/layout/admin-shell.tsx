@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { Bell, Box, ChevronDown, ExternalLink, LayoutDashboard, Menu, Settings, Truck, Users, X, MapPin, Wallet, FileText, MessageSquare, Newspaper, ShieldCheck, ScrollText, UserRound, Package } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
@@ -40,6 +40,7 @@ const BIMBIM_WEBSITE_URL = process.env.NEXT_PUBLIC_BIMBIM_WEBSITE_URL || 'https:
 
 export function AdminShell({ children, title, subtitle, action }: { children: React.ReactNode; title: string; subtitle?: string; action?: React.ReactNode }) {
   const pathname = usePathname()
+  const searchParams = useSearchParams()
   const [open, setOpen] = useState(false)
   const [today, setToday] = useState('')
   useEffect(() => setToday(new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date())), [])
@@ -59,9 +60,10 @@ export function AdminShell({ children, title, subtitle, action }: { children: Re
           {group.section && <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-sidebar-foreground/40">{group.section}</p>}
           {group.items.map(item => {
             const Icon = item.icon
-            const base = item.href.split('?')[0]
-            const active = pathname === base || pathname.startsWith(base + '/')
-            return <Link key={item.href} href={item.href} onClick={() => setOpen(false)} className={cn('flex items-center justify-between rounded-xl px-3 py-2.5 text-[13px] transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground', active && 'bg-primary text-primary-foreground font-semibold shadow-sm hover:bg-primary')}>
+            const [base, query = ''] = item.href.split('?')
+            const itemParams = new URLSearchParams(query)
+            const active = pathname === base && Array.from(itemParams.entries()).every(([key, value]) => searchParams.get(key) === value) && (itemParams.size > 0 || Array.from(searchParams.keys()).length === 0)
+            return <Link key={item.href} href={item.href} onClick={() => setOpen(false)} className={cn('flex items-center justify-between rounded-xl px-3 py-2.5 text-[13px] transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground', active && 'bg-primary text-primary-foreground font-semibold shadow-sm hover:bg-primary hover:text-primary-foreground')}>
               <span className="flex items-center gap-3"><Icon className="size-[16px]" />{item.label}</span>
               {item.count && <span className={cn('flex size-5 items-center justify-center rounded-full text-[10px]', active ? 'bg-white/15' : 'bg-danger/10 text-danger')}>{item.count}</span>}
             </Link>
