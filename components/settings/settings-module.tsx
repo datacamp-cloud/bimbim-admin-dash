@@ -1,11 +1,77 @@
 'use client'
 
-import { useEffect,useState } from 'react'
-import { Check,Save } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Check, Save } from 'lucide-react'
 import { AdminShell } from '@/components/layout/admin-shell'
 
-export function SettingsModule(){
- const [admin,setAdmin]=useState<any>(null),[auto,setAuto]=useState(false),[alerts,setAlerts]=useState(false),[saved,setSaved]=useState(false)
- useEffect(()=>{fetch('/api/admin/settings',{cache:'no-store'}).then(r=>r.json()).then(x=>setAdmin(x.admin??null))},[])
- return <AdminShell title="Paramètres" subtitle="Informations de l'administrateur et préférences locales."><div className="max-w-3xl space-y-6"><section className="rounded-2xl border border-border bg-card p-6"><h2 className="font-semibold">Administrateur</h2><p className="mt-1 text-sm text-muted-foreground">Informations récupérées depuis Neon.</p><div className="mt-6 grid gap-5 sm:grid-cols-2"><div><p className="text-xs text-muted-foreground">Nom</p><p className="mt-1 font-medium">{admin?.nom??'Chargement...'}</p></div><div><p className="text-xs text-muted-foreground">Email</p><p className="mt-1 font-medium">{admin?.email??'Chargement...'}</p></div><div><p className="text-xs text-muted-foreground">Rôle</p><p className="mt-1 font-medium">{admin?.role??'—'}</p></div><div><p className="text-xs text-muted-foreground">Statut</p><p className="mt-1 font-medium">{admin?.statut??'—'}</p></div></div></section><section className="rounded-2xl border border-border bg-card p-6"><h2 className="font-semibold">Préférences de l’interface</h2><p className="mt-1 text-sm text-muted-foreground">Ces options sont locales à cette interface. Elles ne correspondent pas à des colonnes actuellement présentes dans Neon.</p><div className="mt-5 space-y-3">{[['Attribution automatique',auto,setAuto],['Alertes opérationnelles',alerts,setAlerts]].map(([l,v,set])=><button key={String(l)} type="button" onClick={()=>set(!(v as boolean))} className="flex w-full items-center justify-between rounded-xl border border-border p-4 text-left"><span><b className="block text-sm">{String(l)}</b><small className="text-xs text-muted-foreground">Préférence locale</small></span><span className={`relative h-6 w-11 rounded-full ${v?'bg-primary':'bg-muted'}`}><span className={`absolute top-1 size-4 rounded-full bg-card transition-transform ${v?'translate-x-6':'translate-x-1'}`}/></span></button>)}</div></section><button onClick={()=>{setSaved(true);setTimeout(()=>setSaved(false),1500)}} className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground">{saved?<Check className="size-4"/>:<Save className="size-4"/>}{saved?'Enregistré':'Enregistrer'}</button></div></AdminShell>
+export function SettingsModule() {
+  const [admin, setAdmin] = useState<any>(null)
+  const [auto, setAuto] = useState(false)
+  const [alerts, setAlerts] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/admin/settings', { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((x) => setAdmin(x.admin ?? null))
+  }, [])
+
+  const preferences = [
+    { label: 'Attribution automatique', value: auto, setValue: setAuto },
+    { label: 'Alertes opérationnelles', value: alerts, setValue: setAlerts },
+  ]
+
+  return (
+    <AdminShell title="Paramètres" subtitle="Informations de l'administrateur et préférences locales.">
+      <div className="max-w-3xl space-y-6">
+        <section className="rounded-2xl border border-border bg-card p-6">
+          <h2 className="font-semibold">Administrateur</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Informations récupérées depuis Neon.</p>
+          <div className="mt-6 grid gap-5 sm:grid-cols-2">
+            <div><p className="text-xs text-muted-foreground">Nom</p><p className="mt-1 font-medium">{admin?.nom ?? 'Chargement...'}</p></div>
+            <div><p className="text-xs text-muted-foreground">Email</p><p className="mt-1 font-medium">{admin?.email ?? 'Chargement...'}</p></div>
+            <div><p className="text-xs text-muted-foreground">Rôle</p><p className="mt-1 font-medium">{admin?.role ?? '—'}</p></div>
+            <div><p className="text-xs text-muted-foreground">Statut</p><p className="mt-1 font-medium">{admin?.statut ?? '—'}</p></div>
+          </div>
+        </section>
+
+        <section className="rounded-2xl border border-border bg-card p-6">
+          <h2 className="font-semibold">Préférences de l’interface</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Ces options sont locales à cette interface. Elles ne correspondent pas à des colonnes actuellement présentes dans Neon.
+          </p>
+
+          <div className="mt-5 space-y-3">
+            {preferences.map(({ label, value, setValue }) => (
+              <button
+                key={label}
+                type="button"
+                onClick={() => setValue(!value)}
+                className="flex w-full items-center justify-between rounded-xl border border-border p-4 text-left"
+              >
+                <span>
+                  <b className="block text-sm">{label}</b>
+                  <small className="text-xs text-muted-foreground">Préférence locale</small>
+                </span>
+                <span className={`relative h-6 w-11 rounded-full ${value ? 'bg-primary' : 'bg-muted'}`}>
+                  <span className={`absolute top-1 size-4 rounded-full bg-card transition-transform ${value ? 'translate-x-6' : 'translate-x-1'}`} />
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <button
+          onClick={() => {
+            setSaved(true)
+            setTimeout(() => setSaved(false), 1500)
+          }}
+          className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground"
+        >
+          {saved ? <Check className="size-4" /> : <Save className="size-4" />}
+          {saved ? 'Enregistré' : 'Enregistrer'}
+        </button>
+      </div>
+    </AdminShell>
+  )
 }
