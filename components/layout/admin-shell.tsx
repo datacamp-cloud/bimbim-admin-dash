@@ -1,9 +1,9 @@
 'use client'
 
 import Link from 'next/link'
+import { Suspense, useEffect, useState } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { Bell, Box, ChevronDown, ExternalLink, LayoutDashboard, Menu, Settings, Truck, Users, X, MapPin, Wallet, FileText, MessageSquare, Newspaper, ShieldCheck, ScrollText, UserRound, Package } from 'lucide-react'
-import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
 
 const nav = [
@@ -38,11 +38,57 @@ const nav = [
 
 const BIMBIM_WEBSITE_URL = process.env.NEXT_PUBLIC_BIMBIM_WEBSITE_URL || 'https://bimbim.ci'
 
-export function AdminShell({ children, title, subtitle, action }: { children: React.ReactNode; title: string; subtitle?: string; action?: React.ReactNode }) {
+function SidebarNav({ onNavigate }: { onNavigate: () => void }) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
+
+  return (
+    <div className="mt-7 flex flex-1 flex-col gap-5 overflow-y-auto pr-1">
+      {nav.map(group => <div key={group.section || 'main'} className="space-y-1">
+        {group.section && <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-sidebar-foreground/40">{group.section}</p>}
+        {group.items.map(item => {
+          const Icon = item.icon
+          const [base, query = ''] = item.href.split('?')
+          const itemParams = new URLSearchParams(query)
+          const active = pathname === base && Array.from(itemParams.entries()).every(([key, value]) => searchParams.get(key) === value) && (itemParams.size > 0 || Array.from(searchParams.keys()).length === 0)
+
+          return (
+            <Link key={item.href} href={item.href} onClick={onNavigate} className={cn('flex items-center justify-between rounded-xl px-3 py-2.5 text-[13px] transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground', active && 'bg-primary text-primary-foreground font-semibold shadow-sm hover:bg-primary hover:text-primary-foreground')}>
+              <span className="flex items-center gap-3"><Icon className="size-[16px]" />{item.label}</span>
+              {item.count && <span className={cn('flex size-5 items-center justify-center rounded-full text-[10px]', active ? 'bg-white/15' : 'bg-danger/10 text-danger')}>{item.count}</span>}
+            </Link>
+          )
+        })}
+      </div>)}
+    </div>
+  )
+}
+
+function SidebarNavFallback() {
+  return (
+    <div className="mt-7 flex flex-1 flex-col gap-5 overflow-y-auto pr-1">
+      {nav.map(group => (
+        <div key={group.section || 'main'} className="space-y-1">
+          {group.section && <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-sidebar-foreground/40">{group.section}</p>}
+          {group.items.map(item => {
+            const Icon = item.icon
+            return (
+              <Link key={item.href} href={item.href} className="flex items-center justify-between rounded-xl px-3 py-2.5 text-[13px] transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
+                <span className="flex items-center gap-3"><Icon className="size-[16px]" />{item.label}</span>
+                {item.count && <span className="flex size-5 items-center justify-center rounded-full bg-danger/10 text-[10px] text-danger">{item.count}</span>}
+              </Link>
+            )
+          })}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+export function AdminShell({ children, title, subtitle, action }: { children: React.ReactNode; title: string; subtitle?: string; action?: React.ReactNode }) {
   const [open, setOpen] = useState(false)
   const [today, setToday] = useState('')
+
   useEffect(() => setToday(new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date())), [])
 
   return <div className="min-h-screen bg-background text-foreground">
@@ -55,21 +101,9 @@ export function AdminShell({ children, title, subtitle, action }: { children: Re
       </div>
       <p className="mt-1 px-3 text-[10px] font-medium text-muted-foreground">Espace administrateur</p>
 
-      <div className="mt-7 flex flex-1 flex-col gap-5 overflow-y-auto pr-1">
-        {nav.map(group => <div key={group.section || 'main'} className="space-y-1">
-          {group.section && <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-sidebar-foreground/40">{group.section}</p>}
-          {group.items.map(item => {
-            const Icon = item.icon
-            const [base, query = ''] = item.href.split('?')
-            const itemParams = new URLSearchParams(query)
-            const active = pathname === base && Array.from(itemParams.entries()).every(([key, value]) => searchParams.get(key) === value) && (itemParams.size > 0 || Array.from(searchParams.keys()).length === 0)
-            return <Link key={item.href} href={item.href} onClick={() => setOpen(false)} className={cn('flex items-center justify-between rounded-xl px-3 py-2.5 text-[13px] transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground', active && 'bg-primary text-primary-foreground font-semibold shadow-sm hover:bg-primary hover:text-primary-foreground')}>
-              <span className="flex items-center gap-3"><Icon className="size-[16px]" />{item.label}</span>
-              {item.count && <span className={cn('flex size-5 items-center justify-center rounded-full text-[10px]', active ? 'bg-white/15' : 'bg-danger/10 text-danger')}>{item.count}</span>}
-            </Link>
-          })}
-        </div>)}
-      </div>
+      <Suspense fallback={<SidebarNavFallback />}>
+        <SidebarNav onNavigate={() => setOpen(false)} />
+      </Suspense>
 
       <div className="flex flex-col gap-2 border-t border-sidebar-border pt-4">
         <div className="rounded-xl bg-sidebar-accent p-3"><p className="text-xs font-semibold">Besoin d’aide ?</p><p className="mt-1 text-[11px] leading-4 text-muted-foreground">Contactez le support Bimbim.</p><a href="mailto:support@bimbim.ci" className="mt-2 inline-block text-[11px] font-semibold text-primary hover:underline">Contacter le support</a></div>
