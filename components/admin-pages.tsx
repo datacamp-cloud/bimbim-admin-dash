@@ -1,11 +1,27 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Bell, Search } from 'lucide-react'
 import { AdminShell, Avatar, StatusBadge } from '@/components/layout/admin-shell'
 
 export function UsersPage() {
+  return (
+    <Suspense
+      fallback={
+        <AdminShell title="Utilisateurs" subtitle="Chargement...">
+          <div className="rounded-2xl border border-border bg-card p-6 text-sm text-muted-foreground">
+            Chargement des utilisateurs...
+          </div>
+        </AdminShell>
+      }
+    >
+      <UsersPageContent />
+    </Suspense>
+  )
+}
+
+function UsersPageContent() {
   const searchParams = useSearchParams()
   const type = searchParams.get('type')
   const isPartnersPage = type === 'partners'
