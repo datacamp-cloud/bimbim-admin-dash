@@ -103,8 +103,92 @@ function UsersPageContent() {
   )
 }
 
-export function NotificationsPage(){
- const [data,setData]=useState<any[]>([])
- useEffect(()=>{fetch('/api/admin/notifications',{cache:'no-store'}).then(r=>r.json()).then(x=>setData(x.data??[]))},[])
- return <AdminShell title="Notifications" subtitle="Notifications enregistrées dans Neon."><div className="rounded-2xl border border-border bg-card divide-y divide-border">{data.length===0?<div className="p-10 text-center text-sm text-muted-foreground">Aucune notification.</div>:data.map(n=><div key={n.id} className="flex gap-4 p-5"><span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted"><Bell className="size-4"/></span><div><p className="font-medium">{n.title}</p><p className="mt-1 text-sm text-muted-foreground">{n.description}</p><p className="mt-2 text-xs text-muted-foreground">{new Date(n.date).toLocaleString('fr-FR')} · {n.status}</p></div></div>)}</div></AdminShell>
+export function NotificationsPage() {
+  return (
+    <Suspense
+      fallback={
+        <AdminShell title="Notifications" subtitle="Chargement...">
+          <div className="rounded-2xl border border-border bg-card p-6 text-sm text-muted-foreground">
+            Chargement du module...
+          </div>
+        </AdminShell>
+      }
+    >
+      <CommunicationPageContent />
+    </Suspense>
+  )
+}
+
+function CommunicationPageContent() {
+  const searchParams = useSearchParams()
+  const view = searchParams.get('view') ?? 'notifications'
+  const [data, setData] = useState<any[]>([])
+
+  useEffect(() => {
+    if (view === 'notifications') {
+      fetch('/api/admin/notifications', { cache: 'no-store' })
+        .then((r) => r.json())
+        .then((x) => setData(x.data ?? []))
+        .catch(() => setData([]))
+    }
+  }, [view])
+
+  if (view === 'messages') {
+    return (
+      <AdminShell title="Messages" subtitle="Centre de communication avec les utilisateurs et partenaires.">
+        <section className="rounded-2xl border border-border bg-card p-10 text-center">
+          <span className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <Bell className="size-6" />
+          </span>
+          <h2 className="mt-4 font-semibold">Messagerie</h2>
+          <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+            Le canal de messages n’est pas encore exposé par l’API d’administration. L’espace est prêt pour recevoir les conversations Bimbim.
+          </p>
+        </section>
+      </AdminShell>
+    )
+  }
+
+  if (view === 'news') {
+    return (
+      <AdminShell title="Actualités" subtitle="Publiez et consultez les actualités destinées à l’écosystème Bimbim.">
+        <section className="rounded-2xl border border-border bg-card p-10 text-center">
+          <span className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <Bell className="size-6" />
+          </span>
+          <h2 className="mt-4 font-semibold">Actualités Bimbim</h2>
+          <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+            Aucun module d’actualités n’est actuellement exposé par l’API d’administration.
+          </p>
+        </section>
+      </AdminShell>
+    )
+  }
+
+  return (
+    <AdminShell title="Notifications" subtitle="Notifications enregistrées dans Neon.">
+      <div className="rounded-2xl border border-border bg-card divide-y divide-border">
+        {data.length === 0 ? (
+          <div className="p-10 text-center text-sm text-muted-foreground">
+            Aucune notification.
+          </div>
+        ) : (
+          data.map((n) => (
+            <div key={n.id} className="flex gap-4 p-5">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted">
+                <Bell className="size-4" />
+              </span>
+              <div>
+                <p className="font-medium">{n.title}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{n.description}</p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {new Date(n.date).toLocaleString('fr-FR')} · {n.status}
+                </p>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </AdminShell>
+  )
 }
