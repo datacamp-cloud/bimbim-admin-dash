@@ -17,11 +17,14 @@ export async function GET() {
 
     const [
       clients,
+      activePartners,
       livreurs,
+      activeCouriers,
       commandes,
       livraisons,
       pendingReturns,
       onlineLivreurs,
+      globalWalletBalance,
       revenueRows,
       orderStatusRows,
       dailyRows,
@@ -31,11 +34,14 @@ export async function GET() {
       positions,
     ] = await Promise.all([
       prisma.client.count(),
+      prisma.client.count({ where: { type_client: 'entreprise', statut: 'actif' } }),
       prisma.livreur.count(),
+      prisma.livreur.count({ where: { statut_compte: 'actif' } }),
       prisma.commande.count(),
       prisma.livraison.count(),
       prisma.retourLivraison.count({ where: { statut: 'en_attente' } }),
       prisma.livreur.count({ where: { disponibilite: true, statut_compte: 'actif' } }),
+      prisma.wallet.aggregate({ _sum: { solde: true }, where: { statut: 'actif' } }),
       prisma.transaction.aggregate({ _sum: { montant: true }, where: { statut: 'reussi', date_operation: { gte: start30 } } }),
       prisma.commande.groupBy({ by: ['statut'], _count: { _all: true } }),
       prisma.commande.findMany({ where: { date_creation: { gte: start7 } }, select: { date_creation: true } }),
@@ -98,12 +104,16 @@ export async function GET() {
     return NextResponse.json({
       counters: {
         clients,
-        partners: 0,
+        partners: activePartners,
         livreurs,
+        activeCouriers,
         commandes,
         livraisons,
         pendingReturns,
         onlineLivreurs,
+      },
+      wallet: {
+        totalBalance: num(globalWalletBalance._sum.solde),
       },
       revenue: { current: revenue, previous: 0 },
       orders30d,
