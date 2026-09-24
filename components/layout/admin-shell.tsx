@@ -219,6 +219,13 @@ export function AdminShell({
   const [open, setOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [today, setToday] = useState("");
+  const [adminProfile, setAdminProfile] = useState<{
+    nom: string;
+    role: string;
+    roleLabel: string;
+    initials: string;
+    login: string;
+  } | null>(null);
 
   useEffect(
     () =>
@@ -233,11 +240,61 @@ export function AdminShell({
     [],
   );
 
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadAdminProfile() {
+      try {
+        const response = await fetch("/api/admin/session", { cache: "no-store" });
+        if (!response.ok) {
+          if (isMounted) setAdminProfile(null);
+          return;
+        }
+
+        const data = (await response.json()) as { admin?: { nom?: string; role?: string; roleLabel?: string; initials?: string; login?: string } | null };
+        if (isMounted) {
+          setAdminProfile(
+            data.admin
+              ? {
+                  nom: data.admin.nom ?? "Administrateur",
+                  role: data.admin.role ?? "super_admin",
+                  roleLabel: data.admin.roleLabel ?? "Administrateur",
+                  initials: data.admin.initials ?? "AD",
+                  login: data.admin.login ?? "admin",
+                }
+              : null,
+          );
+        }
+      } catch {
+        if (isMounted) setAdminProfile(null);
+      }
+    }
+
+    loadAdminProfile();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const handleLogout = async () => {
     setLoggingOut(true);
-    // Add logout logic here
-    setLoggingOut(false);
+
+    try {
+      await fetch("/api/auth/admin/logout", { method: "POST" });
+      router.push("/admin/login");
+      router.refresh();
+    } catch {
+      router.push("/admin/login");
+      router.refresh();
+    } finally {
+      setLoggingOut(false);
+    }
   };
+
+  const displayName = adminProfile?.nom || "Administrateur";
+  const displayRole = adminProfile?.roleLabel || "Administrateur";
+  const displayInitials = adminProfile?.initials || "AD";
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -251,7 +308,7 @@ export function AdminShell({
           <a
             href={BIMBIM_WEBSITE_URL}
             className="group flex items-center gap-3"
-            aria-label="Bimbim"
+            aria-label="bimbim"
           >
             <span className="flex h-10 w-[116px] items-center overflow-hidden rounded-lg">
               <img
@@ -269,9 +326,7 @@ export function AdminShell({
             <X />
           </button>
         </div>
-        <p className="mt-1 px-3 text-[10px] font-medium text-muted-foreground">
-          Espace administrateur
-        </p>
+        
 
         <Suspense fallback={<SidebarNavFallback />}>
           <SidebarNav onNavigate={() => setOpen(false)} />
@@ -281,7 +336,7 @@ export function AdminShell({
           <div className="rounded-xl bg-sidebar-accent p-3">
             <p className="text-xs font-semibold">Besoin d’aide ?</p>
             <p className="mt-1 text-[11px] leading-4 text-muted-foreground">
-              Contactez le support Bimbim.
+              Contactez le support bimbim.
             </p>
             <a
               href="mailto:support@bimbim.ci"
@@ -297,7 +352,7 @@ export function AdminShell({
             className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <ExternalLink className="size-[17px]" />
-            Voir le site Bimbim
+            Voir le site bimbim
           </a>
           <div className="group relative">
             <button
@@ -306,12 +361,12 @@ export function AdminShell({
               className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
             >
               <span className="flex size-8 items-center justify-center rounded-full bg-[#D8A77C] text-xs font-semibold text-white">
-                CM
+                {displayInitials}
               </span>
               <span className="flex-1">
-                <span className="block text-sm font-medium">Campbell M.</span>
+                <span className="block text-sm font-medium">{displayName}</span>
                 <span className="block text-xs text-muted-foreground">
-                  Administrateur
+                  {displayRole}
                 </span>
               </span>
               <ChevronDown className="size-4 text-muted-foreground" />
@@ -355,7 +410,7 @@ export function AdminShell({
               >
                 {today}
               </p>
-              <p className="text-sm font-semibold">Bonjour Campbell</p>
+              <p className="text-sm font-semibold">Bonjour {displayName.split(" ")[0] || "Administrateur"}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -381,7 +436,7 @@ export function AdminShell({
             {action}
             <span className="hidden h-8 w-px bg-border sm:block" />
             <div className="flex size-9 items-center justify-center rounded-full bg-[#D8A77C] text-xs font-semibold text-white">
-              CM
+              {displayInitials}
             </div>
           </div>
         </header>
