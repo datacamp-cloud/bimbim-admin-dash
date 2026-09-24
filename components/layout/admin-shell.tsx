@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Bell,
   Box,
@@ -215,7 +215,9 @@ export function AdminShell({
   subtitle?: string;
   action?: React.ReactNode;
 }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const [today, setToday] = useState("");
 
   useEffect(
@@ -291,18 +293,34 @@ export function AdminShell({
             <ExternalLink className="size-[17px]" />
             Voir le site Bimbim
           </a>
-          <button className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
-            <span className="flex size-8 items-center justify-center rounded-full bg-[#D8A77C] text-xs font-semibold text-white">
-              CM
-            </span>
-            <span className="flex-1">
-              <span className="block text-sm font-medium">Campbell M.</span>
-              <span className="block text-xs text-muted-foreground">
-                Administrateur
+          <div className="group relative">
+            <button
+              type="button"
+              disabled={loggingOut}
+              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+            >
+              <span className="flex size-8 items-center justify-center rounded-full bg-[#D8A77C] text-xs font-semibold text-white">
+                CM
               </span>
-            </span>
-            <ChevronDown className="size-4 text-muted-foreground" />
-          </button>
+              <span className="flex-1">
+                <span className="block text-sm font-medium">Campbell M.</span>
+                <span className="block text-xs text-muted-foreground">
+                  Administrateur
+                </span>
+              </span>
+              <ChevronDown className="size-4 text-muted-foreground" />
+            </button>
+            <div className="invisible absolute bottom-full left-0 right-0 mb-2 rounded-xl border border-border bg-background p-1 opacity-0 shadow-lg transition-opacity group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100">
+              <button
+                type="button"
+                onClick={handleLogout}
+                disabled={loggingOut}
+                className="w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-danger transition-colors hover:bg-danger/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+              >
+                {loggingOut ? "Déconnexion..." : "Se déconnecter"}
+              </button>
+            </div>
+          </div>
         </div>
       </aside>
 
