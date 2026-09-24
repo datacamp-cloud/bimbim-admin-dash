@@ -27,9 +27,9 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 try {
   const passwordHash = hashPassword(password);
   const result = await pool.query(
-    `INSERT INTO administrateurs (nom, email, login, mot_de_passe, role, statut)
-     VALUES ($1, $2, $3, $4, 'super_admin', 'actif')
-     RETURNING id, nom, email, login, role, statut`,
+    `INSERT INTO administrateurs (nom, email, login, mot_de_passe, role, statut, date_maj)
+     VALUES ($1, $2, $3, $4, 'super_admin', 'actif', NOW())
+     RETURNING id, nom, email, login, role, statut, date_maj`,
     [nom, email, login, passwordHash],
   );
 

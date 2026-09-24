@@ -233,6 +233,12 @@ export function AdminShell({
     [],
   );
 
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    // Add logout logic here
+    setLoggingOut(false);
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <aside
