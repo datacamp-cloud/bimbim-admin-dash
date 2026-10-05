@@ -52,6 +52,10 @@ export async function GET() {
       globalWalletBalance,
       revenueRows,
       revenuePreviousRows,
+      commissionRows,
+      commissionPreviousRows,
+      bonusRows,
+      adjustmentRows,
       orderStatusRows,
       dailyRows,
       recentOrders,
@@ -83,6 +87,22 @@ export async function GET() {
       prisma.transaction.aggregate({
         _sum: { montant: true },
         where: { statut: 'reussi', date_operation: { gte: start60, lt: start30 } },
+      }),
+      prisma.transaction.aggregate({
+        _sum: { montant: true },
+        where: { type_transaction: 'commission', statut: 'reussi', date_operation: { gte: start30 } },
+      }),
+      prisma.transaction.aggregate({
+        _sum: { montant: true },
+        where: { type_transaction: 'commission', statut: 'reussi', date_operation: { gte: start60, lt: start30 } },
+      }),
+      prisma.transaction.aggregate({
+        _sum: { montant: true },
+        where: { type_transaction: 'bonus', statut: 'reussi', date_operation: { gte: start30 } },
+      }),
+      prisma.transaction.aggregate({
+        _sum: { montant: true },
+        where: { type_transaction: 'ajustement', statut: 'reussi', date_operation: { gte: start30 } },
       }),
       prisma.commande.groupBy({
         by: ['statut'],
@@ -227,6 +247,10 @@ export async function GET() {
 
     const revenue = num(revenueRows._sum.montant)
     const previousRevenue = num(revenuePreviousRows._sum.montant)
+    const commissions = num(commissionRows._sum.montant)
+    const previousCommissions = num(commissionPreviousRows._sum.montant)
+    const bonuses = num(bonusRows._sum.montant)
+    const adjustments = num(adjustmentRows._sum.montant)
     const recent = recentOrders.map((o) => {
       const segment = o.livraisons[0]?.segments[0]
       const courier = segment?.livreur_destinataire ?? segment?.livreur_source
@@ -253,7 +277,14 @@ export async function GET() {
         onlineLivreurs,
       },
       wallet: { totalBalance: num(globalWalletBalance._sum.solde) },
-      revenue: { current: revenue, previous: previousRevenue },
+      revenue: {
+        current: revenue,
+        previous: previousRevenue,
+        commissions,
+        previousCommissions,
+        bonuses,
+        adjustments,
+      },
       orders30d,
       dailyOrders: Array.from(dailyMap.entries()).map(([date, value]) => ({
         label: new Intl.DateTimeFormat('fr-FR', { weekday: 'short' }).format(new Date(date)),
