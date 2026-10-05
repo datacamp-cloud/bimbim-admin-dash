@@ -29,6 +29,14 @@ type PayTransaction = {
 
 type DashboardSnapshot = {
   wallet?: { totalBalance?: number }
+  revenue?: {
+    current?: number
+    previous?: number
+    commissions?: number
+    previousCommissions?: number
+    bonuses?: number
+    adjustments?: number
+  }
   recentTransactions?: PayTransaction[]
 }
 
@@ -96,6 +104,9 @@ function SettingsPageContent() {
 
   const transactions = snapshot?.recentTransactions ?? []
   const balance = Number(snapshot?.wallet?.totalBalance ?? 0)
+  const commissions = Number(snapshot?.revenue?.commissions ?? 0)
+  const bonuses = Number(snapshot?.revenue?.bonuses ?? 0)
+  const adjustments = Number(snapshot?.revenue?.adjustments ?? 0)
 
   const page = useMemo(() => {
     const pages: Record<string, { title: string; subtitle: string }> = {
@@ -172,10 +183,19 @@ function SettingsPageContent() {
 
         {tab === 'transactions' && (
           <>
-            <section className="grid gap-4 sm:grid-cols-3">
+            <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <Metric icon={Wallet} label="Solde global" value={money(balance)} />
-              <Metric icon={ArrowUpFromLine} label="Transactions affichées" value={String(transactions.length)} />
-              <Metric icon={Activity} label="Source" value="Bimbim Pay" />
+              <Metric icon={Activity} label="Commissions" value={money(commissions)} />
+              <Metric icon={ArrowUpFromLine} label="Bonus attribués" value={money(bonuses)} />
+              <Metric icon={ArrowDownToLine} label="Ajustements" value={money(adjustments)} />
+            </section>
+            <section className="rounded-2xl border border-border bg-warning/5 p-5">
+              <p className="text-sm font-semibold">Lecture financière</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Les commissions correspondent aux transactions enregistrées avec le type « commission ».
+                Les bonus et ajustements sont présentés séparément. Aucun remboursement ou retrait administratif
+                n’est déclenché depuis cette vue tant que le workflow métier n’est pas défini.
+              </p>
             </section>
             <TransactionTable transactions={transactions} />
           </>
@@ -183,6 +203,11 @@ function SettingsPageContent() {
 
         {tab === 'wallet' && (
           <>
+            <section className="grid gap-4 md:grid-cols-3">
+              <Metric icon={Wallet} label="Solde global" value={money(balance)} />
+              <Metric icon={Activity} label="Commissions" value={money(commissions)} />
+              <Metric icon={ArrowUpFromLine} label="Bonus attribués" value={money(bonuses)} />
+            </section>
             <section className="rounded-2xl border border-border bg-primary p-6 text-primary-foreground">
               <p className="text-sm opacity-80">Solde global Bimbim Pay</p>
               <p className="mt-2 text-3xl font-bold">{money(balance)}</p>
