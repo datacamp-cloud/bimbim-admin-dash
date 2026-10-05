@@ -22,6 +22,9 @@ type PayTransaction = {
   type_transaction: string
   statut: string
   date_operation: string
+  reference?: string
+  moyen_paiement?: string
+  description?: string | null
 }
 
 type DashboardSnapshot = {
