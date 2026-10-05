@@ -31,6 +31,7 @@ export async function GET(request: NextRequest) {
         select: {
           id: true, statut: true, total_livraisons: true, total_montant: true, date_creation: true,
           client: { select: { nom: true, telephone: true } },
+          livraisons: { take: 1, orderBy: { date_creation: 'asc' }, select: { adresse_ramassage: true, adresse_livraison: true } },
         },
       })
       return NextResponse.json({
@@ -39,8 +40,8 @@ export async function GET(request: NextRequest) {
           id: o.id,
           client: o.client?.nom ?? 'Client',
           phone: o.client?.telephone ?? '—',
-          from: '—',
-          to: '—',
+          from: o.livraisons[0]?.adresse_ramassage ?? '—',
+          to: o.livraisons[0]?.adresse_livraison ?? '—',
           courier: '—',
           status: o.statut,
           price: Number(o.total_montant),
