@@ -47,7 +47,7 @@ export default function AdminLoginPage() {
           </div>
           <h1 className="mt-5 text-2xl font-semibold tracking-tight">Espace administrateur</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Connectez-vous avec vos accès Bimbim.
+            Connectez-vous avec vos accès bimbim.
           </p>
         </div>
 
