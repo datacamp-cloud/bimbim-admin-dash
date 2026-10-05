@@ -122,13 +122,16 @@ export async function GET() {
       prisma.transaction.findMany({
         where: { statut: 'reussi' },
         orderBy: { date_operation: 'desc' },
-        take: 5,
+        take: 50,
         select: {
           id: true,
           montant: true,
           type_transaction: true,
           statut: true,
           date_operation: true,
+          reference: true,
+          moyen_paiement: true,
+          description: true,
         },
       }),
       prisma.retourLivraison.findMany({
@@ -272,6 +275,9 @@ export async function GET() {
       recentTransactions: recentTransactions.map(t => ({
         ...t,
         montant: num(t.montant),
+        reference: t.reference,
+        moyen_paiement: t.moyen_paiement,
+        description: t.description,
         date_operation: t.date_operation.toISOString(),
       })),
       returns: returns.map(r => ({
