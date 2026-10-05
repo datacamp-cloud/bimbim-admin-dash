@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import {
   Activity,
   ArrowDownToLine,
-  ArrowUpFromLine,
+  ArrowUpToLine,
   Check,
   FileText,
   LockKeyhole,
@@ -29,6 +29,15 @@ type DashboardSnapshot = {
   recentTransactions?: PayTransaction[]
 }
 
+type SystemLog = {
+  id: number
+  category: string
+  level: 'info' | 'warning' | 'error'
+  message: string
+  meta?: unknown
+  date: string
+}
+
 const money = (value: number) =>
   new Intl.NumberFormat('fr-FR').format(Math.round(value)) + ' FCFA'
 
@@ -50,6 +59,9 @@ function SettingsPageContent() {
   const [auto, setAuto] = useState(false)
   const [alerts, setAlerts] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [logs, setLogs] = useState<SystemLog[]>([])
+  const [logsLoading, setLogsLoading] = useState(false)
+  const [logsError, setLogsError] = useState("")
 
   useEffect(() => {
     fetch('/api/admin/settings', { cache: 'no-store' })
@@ -62,6 +74,20 @@ function SettingsPageContent() {
         .then((r) => r.json())
         .then((x) => setSnapshot(x ?? null))
         .catch(() => setSnapshot(null))
+    }
+
+    if (tab === 'logs') {
+      setLogsLoading(true)
+      setLogsError("")
+      fetch('/api/admin/logs?limit=100', { cache: 'no-store' })
+        .then(async (r) => {
+          const payload = await r.json()
+          if (!r.ok) throw new Error(payload?.error ?? 'Impossible de charger les logs.')
+          return payload
+        })
+        .then((x) => setLogs(x.data ?? []))
+        .catch((error) => setLogsError(error instanceof Error ? error.message : 'Impossible de charger les logs.'))
+        .finally(() => setLogsLoading(false))
     }
   }, [tab])
 
@@ -218,13 +244,32 @@ function SettingsPageContent() {
           <section className="rounded-2xl border border-border bg-card overflow-hidden">
             <div className="border-b border-border p-5">
               <h2 className="font-semibold">Journal système</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Les événements disponibles depuis cette interface.</p>
+              <p className="mt-1 text-sm text-muted-foreground">Événements réellement enregistrés par Bimbim.</p>
             </div>
-            <div className="divide-y divide-border">
-              <LogRow label="Espace administrateur chargé" detail="Interface Bimbim Admin" />
-              <LogRow label="Connexion aux données" detail="API d’administration" />
-              <LogRow label="Surveillance Bimbim Pay" detail="Module financier" />
-            </div>
+            {logsLoading ? (
+              <div className="p-10 text-center text-sm text-muted-foreground">Chargement des logs...</div>
+            ) : logsError ? (
+              <div className="p-6 text-sm text-danger">{logsError}</div>
+            ) : logs.length === 0 ? (
+              <div className="p-10 text-center text-sm text-muted-foreground">Aucun événement enregistré.</div>
+            ) : (
+              <div className="divide-y divide-border">
+                {logs.map((log) => (
+                  <div key={log.id} className="flex flex-col gap-3 p-5 md:flex-row md:items-center md:justify-between">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className={`rounded-full px-2 py-1 text-[10px] font-semibold uppercase ${log.level === 'error' ? 'bg-danger/10 text-danger' : log.level === 'warning' ? 'bg-warning/10 text-warning' : 'bg-success/10 text-success'}`}>
+                          {log.level}
+                        </span>
+                        <span className="text-xs font-semibold text-muted-foreground">{log.category}</span>
+                      </div>
+                      <p className="mt-2 text-sm font-medium">{log.message}</p>
+                    </div>
+                    <span className="shrink-0 text-xs text-muted-foreground">{formatDate(log.date)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
         )}
       </div>
@@ -336,14 +381,3 @@ function SecurityItem({ label, value }: { label: string; value: string }) {
   )
 }
 
-function LogRow({ label, detail }: { label: string; detail: string }) {
-  return (
-    <div className="flex items-center justify-between gap-4 p-5">
-      <div>
-        <p className="text-sm font-medium">{label}</p>
-        <p className="mt-1 text-xs text-muted-foreground">{detail}</p>
-      </div>
-      <span className="text-xs text-muted-foreground">Disponible</span>
-    </div>
-  )
-}
