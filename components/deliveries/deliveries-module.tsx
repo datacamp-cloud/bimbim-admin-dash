@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect,useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { ArrowLeft,ArrowRight,Package,Phone,Truck } from 'lucide-react'
 import { AdminShell,Avatar,StatusBadge } from '@/components/layout/admin-shell'
 
@@ -10,9 +11,11 @@ const money=(n:number)=>new Intl.NumberFormat('fr-FR').format(Math.round(n))+' F
 const label=(s:string)=>({en_attente:'En attente',en_cours:'En cours',livre:'Livrée',retour:'Retour',echec:'Échec'}[s]??s)
 
 export function DeliveriesModulePage(){
+ const searchParams = useSearchParams()
+ const view = searchParams.get('view') ?? 'deliveries'
  const [data,setData]=useState<Delivery[]>([]),[q,setQ]=useState(''),[status,setStatus]=useState(''),[loading,setLoading]=useState(true)
- const load=()=>{setLoading(true);const p=new URLSearchParams();if(q)p.set('q',q);if(status)p.set('status',status);fetch('/api/admin/deliveries?'+p.toString(),{cache:'no-store'}).then(r=>r.json()).then(x=>setData(x.data??[])).finally(()=>setLoading(false))}
- useEffect(()=>{const t=setTimeout(load,250);return()=>clearTimeout(t)},[q,status])
+ const load=()=>{setLoading(true);const p=new URLSearchParams();if(q)p.set('q',q);if(status)p.set('status',status);if(view==='orders')p.set('view','orders');fetch('/api/admin/deliveries?'+p.toString(),{cache:'no-store'}).then(r=>r.json()).then(x=>setData(x.data??[])).finally(()=>setLoading(false))}
+ useEffect(()=>{const t=setTimeout(load,250);return()=>clearTimeout(t)},[q,status,view])
  return <AdminShell title="Livraisons" subtitle="Toutes les livraisons réelles de Bimbim."><div className="rounded-2xl border border-border bg-card overflow-hidden"><div className="flex flex-col gap-3 border-b border-border p-5 md:flex-row"><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Rechercher..." className="flex-1 rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none"/><select value={status} onChange={e=>setStatus(e.target.value)} className="rounded-xl border border-border bg-background px-3 py-2.5 text-sm"><option value="">Tous les statuts</option><option value="en_attente">En attente</option><option value="en_cours">En cours</option><option value="livre">Livrée</option><option value="retour">Retour</option><option value="echec">Échec</option></select></div>{loading?<div className="p-10 text-center text-sm text-muted-foreground">Chargement...</div>:data.length===0?<div className="p-10 text-center text-sm text-muted-foreground">Aucune livraison trouvée.</div>:<div className="divide-y divide-border">{data.map(d=><Link href={`/deliveries/${d.id}`} key={d.id} className="grid gap-3 px-5 py-4 hover:bg-muted/30 md:grid-cols-[90px_1fr_1fr_1fr_120px_100px] md:items-center"><span className="font-mono text-xs font-semibold text-primary">#{d.id}</span><div><p className="text-sm font-medium">{d.client}</p><p className="text-xs text-muted-foreground">{d.phone}</p></div><span className="truncate text-sm">{d.from}</span><span className="truncate text-sm">{d.to}</span><span className="truncate text-sm">{d.courier}</span><div><StatusBadge status={label(d.status)}/><p className="mt-1 text-xs text-muted-foreground">{money(d.price)}</p></div></Link>)}</div>}</div></AdminShell>
 }
 
