@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import {
   Activity,
   ArrowDownToLine,
-  ArrowUpToLine,
+  ArrowUpFromLine,
   Check,
   FileText,
   LockKeyhole,
