@@ -247,7 +247,10 @@ export function AdminShell({
       try {
         const response = await fetch("/api/admin/session", { cache: "no-store" });
         if (!response.ok) {
-          if (isMounted) setAdminProfile(null);
+          if (isMounted) {
+            setAdminProfile(null);
+            router.replace("/admin/login");
+          }
           return;
         }
 
