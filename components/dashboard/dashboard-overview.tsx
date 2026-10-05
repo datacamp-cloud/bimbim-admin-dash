@@ -67,6 +67,16 @@ type Data = {
     status: string;
     courier: string;
   }[];
+  performance: {
+    averageDeliveryMinutes: number | null;
+    previousAverageDeliveryMinutes: number | null;
+    acceptanceRate: number;
+    previousAcceptanceRate: number;
+    rating: number;
+    previousRating: number;
+    completedDeliveries: number;
+    previousCompletedDeliveries: number;
+  };
 };
 
 const money = (n: number) =>
@@ -146,8 +156,7 @@ export function DashboardOverview() {
     ],
   ] as const;
   const totalCommandes = Math.max(
-    data.counters.commandes ||
-      Object.values(data.orders30d).reduce((sum, value) => sum + value, 0),
+    Object.values(data.orders30d).reduce((sum, value) => sum + value, 0),
     1,
   );
 
@@ -209,11 +218,35 @@ export function DashboardOverview() {
     };
   });
 
+  const averageDelivery = data.performance.averageDeliveryMinutes;
+  const previousAverage = data.performance.previousAverageDeliveryMinutes;
+  const deliveryDelta =
+    averageDelivery != null && previousAverage != null && previousAverage > 0
+      ? `${Math.round(((averageDelivery - previousAverage) / previousAverage) * 100)}%`
+      : "—";
   const performance = [
-    { label: "Temps moyen de livraison", value: "—", delta: "—" },
-    { label: "Taux d'acceptation", value: "—", delta: "—" },
-    { label: "Note moyenne", value: "—", delta: "—" },
-    { label: "Livraisons terminées", value: String(data.counters.livraisons || 0), delta: "—" },
+    {
+      label: "Temps moyen de livraison",
+      value: averageDelivery != null ? `${Math.floor(averageDelivery / 60)}h${String(averageDelivery % 60).padStart(2, "0")}` : "—",
+      delta: deliveryDelta,
+    },
+    {
+      label: "Taux d'acceptation",
+      value: `${data.performance.acceptanceRate}%`,
+      delta: data.performance.previousAcceptanceRate ? `${data.performance.acceptanceRate - data.performance.previousAcceptanceRate >= 0 ? "+" : ""}${data.performance.acceptanceRate - data.performance.previousAcceptanceRate}%` : "—",
+    },
+    {
+      label: "Note moyenne",
+      value: data.performance.rating ? `${data.performance.rating.toFixed(1)}/5` : "—",
+      delta: data.performance.previousRating ? `${data.performance.rating - data.performance.previousRating >= 0 ? "+" : ""}${(data.performance.rating - data.performance.previousRating).toFixed(1)}` : "—",
+    },
+    {
+      label: "Livraisons terminées",
+      value: String(data.performance.completedDeliveries),
+      delta: data.performance.previousCompletedDeliveries
+        ? `${data.performance.completedDeliveries - data.performance.previousCompletedDeliveries >= 0 ? "+" : ""}${Math.round(((data.performance.completedDeliveries - data.performance.previousCompletedDeliveries) / data.performance.previousCompletedDeliveries) * 100)}%`
+        : "—",
+    },
   ];
 
   const walletTransactions = data.recentTransactions.slice(0, 3).map((tx) => ({
@@ -436,9 +469,12 @@ export function DashboardOverview() {
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <button className="rounded-xl border border-border bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted">
+                        <Link
+                          href={`/deliveries?view=orders&orderId=${row.orderId}`}
+                          className="rounded-xl border border-border bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
                           Détails
-                        </button>
+                        </Link>
                       </td>
                     </tr>
                   ))}
@@ -450,7 +486,7 @@ export function DashboardOverview() {
           <section className="rounded-2xl border border-border bg-card p-4">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="font-semibold">Mes performances aujourd'hui</h3>
-              <Link href="#" className="text-xs font-semibold text-primary">Voir plus <ArrowRight className="size-3.5 inline" /></Link>
+              <Link href="/settings?tab=transactions" className="text-xs font-semibold text-primary hover:underline">Voir plus <ArrowRight className="size-3.5 inline" /></Link>
             </div>
             <div className="space-y-3 text-sm">
               {performance.map((metric) => (
@@ -474,7 +510,7 @@ export function DashboardOverview() {
                 <Wallet className="size-4 text-primary" />
                 <h3 className="font-semibold">Bimbim Pay</h3>
               </div>
-              <Link href="#" className="text-xs font-semibold text-primary">Voir plus <ArrowRight className="size-3.5 inline" /></Link>
+              <Link href="/settings?tab=wallet" className="text-xs font-semibold text-primary hover:underline">Voir plus <ArrowRight className="size-3.5 inline" /></Link>
             </div>
             <p className="text-3xl font-bold text-foreground">{money(data.wallet.totalBalance)}</p>
             <div className="mt-4 grid grid-cols-2 gap-2">
@@ -509,7 +545,7 @@ export function DashboardOverview() {
           <section className="rounded-2xl border border-border bg-card p-4">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="font-semibold">Courses en cours</h3>
-              <Link href="#" className="text-xs font-semibold text-primary">Voir toutes <ArrowRight className="size-3.5 inline" /></Link>
+              <Link href="/deliveries" className="text-xs font-semibold text-primary hover:underline">Voir toutes <ArrowRight className="size-3.5 inline" /></Link>
             </div>
             <div className="overflow-hidden rounded-xl border border-border">
               <table className="min-w-full text-left text-xs">
@@ -552,7 +588,7 @@ export function DashboardOverview() {
           <section className="rounded-2xl border border-border bg-card p-4">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="font-semibold">Retour de colis</h3>
-              <Link href="#" className="text-xs font-semibold text-primary">Voir toutes <ArrowRight className="size-3.5 inline" /></Link>
+              <Link href="/deliveries?view=returns" className="text-xs font-semibold text-primary hover:underline">Voir toutes <ArrowRight className="size-3.5 inline" /></Link>
             </div>
             <div className="overflow-hidden rounded-xl border border-border">
               <table className="min-w-full text-left text-xs">
@@ -602,9 +638,9 @@ export function DashboardOverview() {
                   Gérez les retours de colis depuis la livraison jusqu'à la réception.
                 </p>
               </div>
-              <button className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-3 py-3 text-sm font-semibold text-primary-foreground">
+              <Link href="/deliveries?view=returns" className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-3 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                 Accéder au suivi <ArrowRight className="size-4" />
-              </button>
+              </Link>
             </div>
           </section>
         </div>
