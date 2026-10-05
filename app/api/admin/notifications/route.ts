@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import { getVerifiedAdminSession } from '@/lib/admin-auth'
 
 export const dynamic = 'force-dynamic'
 
 const channels = new Set(['sms', 'push', 'email'])
 
 export async function GET(request: NextRequest) {
+  const session = await getVerifiedAdminSession()
+  if (!session) return NextResponse.json({ error: 'Non autorisé.' }, { status: 401 })
+
   try {
     const params = request.nextUrl.searchParams
     const channel = params.get('channel') ?? ''
@@ -43,6 +47,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const session = await getVerifiedAdminSession()
+  if (!session) return NextResponse.json({ error: 'Non autorisé.' }, { status: 401 })
+
   try {
     const body = await request.json().catch(() => ({}))
     const id = Number(body?.id)
