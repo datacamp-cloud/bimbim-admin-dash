@@ -22,11 +22,31 @@ type PayTransaction = {
   type_transaction: string
   statut: string
   date_operation: string
+  reference?: string
+  moyen_paiement?: string
+  description?: string | null
 }
 
 type DashboardSnapshot = {
   wallet?: { totalBalance?: number }
+  revenue?: {
+    current?: number
+    previous?: number
+    commissions?: number
+    previousCommissions?: number
+    bonuses?: number
+    adjustments?: number
+  }
   recentTransactions?: PayTransaction[]
+}
+
+type SystemLog = {
+  id: number
+  category: string
+  level: 'info' | 'warning' | 'error'
+  message: string
+  meta?: unknown
+  date: string
 }
 
 const money = (value: number) =>
@@ -50,6 +70,9 @@ function SettingsPageContent() {
   const [auto, setAuto] = useState(false)
   const [alerts, setAlerts] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [logs, setLogs] = useState<SystemLog[]>([])
+  const [logsLoading, setLogsLoading] = useState(false)
+  const [logsError, setLogsError] = useState("")
 
   useEffect(() => {
     fetch('/api/admin/settings', { cache: 'no-store' })
@@ -63,10 +86,27 @@ function SettingsPageContent() {
         .then((x) => setSnapshot(x ?? null))
         .catch(() => setSnapshot(null))
     }
+
+    if (tab === 'logs') {
+      setLogsLoading(true)
+      setLogsError("")
+      fetch('/api/admin/logs?limit=100', { cache: 'no-store' })
+        .then(async (r) => {
+          const payload = await r.json()
+          if (!r.ok) throw new Error(payload?.error ?? 'Impossible de charger les logs.')
+          return payload
+        })
+        .then((x) => setLogs(x.data ?? []))
+        .catch((error) => setLogsError(error instanceof Error ? error.message : 'Impossible de charger les logs.'))
+        .finally(() => setLogsLoading(false))
+    }
   }, [tab])
 
   const transactions = snapshot?.recentTransactions ?? []
   const balance = Number(snapshot?.wallet?.totalBalance ?? 0)
+  const commissions = Number(snapshot?.revenue?.commissions ?? 0)
+  const bonuses = Number(snapshot?.revenue?.bonuses ?? 0)
+  const adjustments = Number(snapshot?.revenue?.adjustments ?? 0)
 
   const page = useMemo(() => {
     const pages: Record<string, { title: string; subtitle: string }> = {
@@ -143,10 +183,19 @@ function SettingsPageContent() {
 
         {tab === 'transactions' && (
           <>
-            <section className="grid gap-4 sm:grid-cols-3">
+            <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <Metric icon={Wallet} label="Solde global" value={money(balance)} />
-              <Metric icon={ArrowUpFromLine} label="Transactions affichées" value={String(transactions.length)} />
-              <Metric icon={Activity} label="Source" value="Bimbim Pay" />
+              <Metric icon={Activity} label="Commissions" value={money(commissions)} />
+              <Metric icon={ArrowUpFromLine} label="Bonus attribués" value={money(bonuses)} />
+              <Metric icon={ArrowDownToLine} label="Ajustements" value={money(adjustments)} />
+            </section>
+            <section className="rounded-2xl border border-border bg-warning/5 p-5">
+              <p className="text-sm font-semibold">Lecture financière</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Les commissions correspondent aux transactions enregistrées avec le type « commission ».
+                Les bonus et ajustements sont présentés séparément. Aucun remboursement ou retrait administratif
+                n’est déclenché depuis cette vue tant que le workflow métier n’est pas défini.
+              </p>
             </section>
             <TransactionTable transactions={transactions} />
           </>
@@ -154,6 +203,11 @@ function SettingsPageContent() {
 
         {tab === 'wallet' && (
           <>
+            <section className="grid gap-4 md:grid-cols-3">
+              <Metric icon={Wallet} label="Solde global" value={money(balance)} />
+              <Metric icon={Activity} label="Commissions" value={money(commissions)} />
+              <Metric icon={ArrowUpFromLine} label="Bonus attribués" value={money(bonuses)} />
+            </section>
             <section className="rounded-2xl border border-border bg-primary p-6 text-primary-foreground">
               <p className="text-sm opacity-80">Solde global Bimbim Pay</p>
               <p className="mt-2 text-3xl font-bold">{money(balance)}</p>
@@ -218,13 +272,32 @@ function SettingsPageContent() {
           <section className="rounded-2xl border border-border bg-card overflow-hidden">
             <div className="border-b border-border p-5">
               <h2 className="font-semibold">Journal système</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Les événements disponibles depuis cette interface.</p>
+              <p className="mt-1 text-sm text-muted-foreground">Événements réellement enregistrés par Bimbim.</p>
             </div>
-            <div className="divide-y divide-border">
-              <LogRow label="Espace administrateur chargé" detail="Interface Bimbim Admin" />
-              <LogRow label="Connexion aux données" detail="API d’administration" />
-              <LogRow label="Surveillance Bimbim Pay" detail="Module financier" />
-            </div>
+            {logsLoading ? (
+              <div className="p-10 text-center text-sm text-muted-foreground">Chargement des logs...</div>
+            ) : logsError ? (
+              <div className="p-6 text-sm text-danger">{logsError}</div>
+            ) : logs.length === 0 ? (
+              <div className="p-10 text-center text-sm text-muted-foreground">Aucun événement enregistré.</div>
+            ) : (
+              <div className="divide-y divide-border">
+                {logs.map((log) => (
+                  <div key={log.id} className="flex flex-col gap-3 p-5 md:flex-row md:items-center md:justify-between">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className={`rounded-full px-2 py-1 text-[10px] font-semibold uppercase ${log.level === 'error' ? 'bg-danger/10 text-danger' : log.level === 'warning' ? 'bg-warning/10 text-warning' : 'bg-success/10 text-success'}`}>
+                          {log.level}
+                        </span>
+                        <span className="text-xs font-semibold text-muted-foreground">{log.category}</span>
+                      </div>
+                      <p className="mt-2 text-sm font-medium">{log.message}</p>
+                    </div>
+                    <span className="shrink-0 text-xs text-muted-foreground">{formatDate(log.date)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
         )}
       </div>
@@ -336,14 +409,3 @@ function SecurityItem({ label, value }: { label: string; value: string }) {
   )
 }
 
-function LogRow({ label, detail }: { label: string; detail: string }) {
-  return (
-    <div className="flex items-center justify-between gap-4 p-5">
-      <div>
-        <p className="text-sm font-medium">{label}</p>
-        <p className="mt-1 text-xs text-muted-foreground">{detail}</p>
-      </div>
-      <span className="text-xs text-muted-foreground">Disponible</span>
-    </div>
-  )
-}

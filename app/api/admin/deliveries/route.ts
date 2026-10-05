@@ -1,12 +1,55 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import { getVerifiedAdminSession } from '@/lib/admin-auth'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
+  const session = await getVerifiedAdminSession()
+  if (!session) return NextResponse.json({ error: 'Non autorisé.' }, { status: 401 })
+
   try {
     const q = request.nextUrl.searchParams.get('q')?.trim()
     const status = request.nextUrl.searchParams.get('status')
+    const view = request.nextUrl.searchParams.get('view')
+
+    if (view === 'orders') {
+      const where = {
+        ...(q ? {
+          OR: [
+            { client: { nom: { contains: q, mode: 'insensitive' as const } } },
+            { adresse_enlevement: { contains: q, mode: 'insensitive' as const } },
+            { adresse_livraison: { contains: q, mode: 'insensitive' as const } },
+          ],
+        } : {}),
+        ...(status ? { statut: status as any } : {}),
+      }
+      const data = await prisma.commande.findMany({
+        where,
+        orderBy: { date_creation: 'desc' },
+        take: 100,
+        select: {
+          id: true, statut: true, total_livraisons: true, total_montant: true, date_creation: true,
+          client: { select: { nom: true, telephone: true } },
+          livraisons: { take: 1, orderBy: { date_creation: 'asc' }, select: { adresse_ramassage: true, adresse_livraison: true } },
+        },
+      })
+      return NextResponse.json({
+        mode: 'orders',
+        data: data.map(o => ({
+          id: o.id,
+          client: o.client?.nom ?? 'Client',
+          phone: o.client?.telephone ?? '—',
+          from: o.livraisons[0]?.adresse_ramassage ?? '—',
+          to: o.livraisons[0]?.adresse_livraison ?? '—',
+          courier: '—',
+          status: o.statut,
+          price: Number(o.total_montant),
+          time: o.date_creation.toISOString(),
+          deliveries: o.total_livraisons,
+        })),
+      })
+    }
     const where = {
       ...(q ? { OR: [{ nom_destinataire: { contains: q, mode: 'insensitive' as const } }, { telephone_destinataire: { contains: q } }, { adresse_ramassage: { contains: q, mode: 'insensitive' as const } }, { adresse_livraison: { contains: q, mode: 'insensitive' as const } }] } : {}),
       ...(status && ['en_attente','en_cours','livre','retour','echec'].includes(status) ? { statut: status as any } : {}),

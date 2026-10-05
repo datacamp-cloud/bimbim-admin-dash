@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Bell, Search } from 'lucide-react'
+import { Bell, Search, Trash2 } from 'lucide-react'
 import { AdminShell, Avatar, StatusBadge } from '@/components/layout/admin-shell'
 
 export function UsersPage() {
@@ -123,15 +123,22 @@ function CommunicationPageContent() {
   const searchParams = useSearchParams()
   const view = searchParams.get('view') ?? 'notifications'
   const [data, setData] = useState<any[]>([])
+  const [channel, setChannel] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const loadNotifications = () => {
+    setLoading(true)
+    const params = new URLSearchParams()
+    if (channel) params.set('channel', channel)
+    fetch(`/api/admin/notifications?${params.toString()}`, { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((x) => setData(x.data ?? []))
+      .finally(() => setLoading(false))
+  }
 
   useEffect(() => {
-    if (view === 'notifications') {
-      fetch('/api/admin/notifications', { cache: 'no-store' })
-        .then((r) => r.json())
-        .then((x) => setData(x.data ?? []))
-        .catch(() => setData([]))
-    }
-  }, [view])
+    if (view === 'notifications') loadNotifications()
+  }, [view, channel])
 
   if (view === 'messages') {
     return (
@@ -167,14 +174,20 @@ function CommunicationPageContent() {
 
   return (
     <AdminShell title="Notifications" subtitle="Notifications enregistrées dans Neon.">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <button type="button" onClick={() => setChannel('')} className={`rounded-xl px-3 py-2 text-sm font-medium ${channel === '' ? 'bg-primary text-primary-foreground' : 'border border-border bg-card hover:bg-muted'}`}>Toutes</button>
+        {['sms', 'push', 'email'].map((item) => (
+          <button key={item} type="button" onClick={() => setChannel(item)} className={`rounded-xl px-3 py-2 text-sm font-medium ${channel === item ? 'bg-primary text-primary-foreground' : 'border border-border bg-card hover:bg-muted'}`}>{item.toUpperCase()}</button>
+        ))}
+      </div>
       <div className="rounded-2xl border border-border bg-card divide-y divide-border">
-        {data.length === 0 ? (
-          <div className="p-10 text-center text-sm text-muted-foreground">
-            Aucune notification.
-          </div>
+        {loading ? (
+          <div className="p-10 text-center text-sm text-muted-foreground">Chargement...</div>
+        ) : data.length === 0 ? (
+          <div className="p-10 text-center text-sm text-muted-foreground">Aucune notification.</div>
         ) : (
           data.map((n) => (
-            <div key={n.id} className="flex gap-4 p-5">
+            <div key={n.id} className="flex items-start gap-4 p-5">
               <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted">
                 <Bell className="size-4" />
               </span>
@@ -185,6 +198,14 @@ function CommunicationPageContent() {
                   {new Date(n.date).toLocaleString('fr-FR')} · {n.status}
                 </p>
               </div>
+              <button
+                type="button"
+                aria-label="Supprimer la notification"
+                onClick={() => fetch('/api/admin/notifications', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: n.id }) }).then(() => loadNotifications())}
+                className="ml-auto rounded-lg p-2 text-muted-foreground hover:bg-danger/10 hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <Trash2 className="size-4" />
+              </button>
             </div>
           ))
         )}

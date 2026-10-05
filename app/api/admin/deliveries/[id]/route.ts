@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import { getVerifiedAdminSession } from '@/lib/admin-auth'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const session = await getVerifiedAdminSession()
+  if (!session) return NextResponse.json({ error: 'Non autorisé.' }, { status: 401 })
+
   try {
     const id = Number((await params).id)
     if (!Number.isInteger(id)) return NextResponse.json({ error: 'Identifiant invalide.' }, { status: 400 })

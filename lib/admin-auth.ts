@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
+import prisma from "@/lib/prisma";
 
 const COOKIE_NAME = "bimbim_admin_session";
 const SESSION_TTL_SECONDS = 60 * 60 * 8;
@@ -60,7 +61,12 @@ export function verifyAdminSession(token: string | undefined): AdminSessionPaylo
 
   try {
     const payload = JSON.parse(decode(value)) as AdminSessionPayload;
-    if (!payload.sub || !payload.login || !payload.role || payload.exp <= Math.floor(Date.now() / 1000)) {
+    if (
+      !payload.sub ||
+      !payload.login ||
+      !payload.role ||
+      payload.exp <= Math.floor(Date.now() / 1000)
+    ) {
       return null;
     }
     return payload;
@@ -72,6 +78,25 @@ export function verifyAdminSession(token: string | undefined): AdminSessionPaylo
 export async function getAdminSession() {
   const store = await cookies();
   return verifyAdminSession(store.get(COOKIE_NAME)?.value);
+}
+
+export async function getVerifiedAdminSession() {
+  const session = await getAdminSession();
+  if (!session) return null;
+
+  const admin = await prisma.administrateur.findUnique({
+    where: { id: session.sub },
+    select: { id: true, login: true, nom: true, role: true, statut: true },
+  });
+
+  if (!admin || admin.statut !== "actif") return null;
+
+  return {
+    ...session,
+    login: admin.login,
+    nom: admin.nom,
+    role: admin.role,
+  };
 }
 
 export const adminSessionCookie = {

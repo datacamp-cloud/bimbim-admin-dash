@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { getAdminSession } from "@/lib/admin-auth";
+import { getVerifiedAdminSession } from "@/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const session = await getAdminSession();
+  const session = await getVerifiedAdminSession();
 
   if (!session) {
     return NextResponse.json({ admin: null }, { status: 401 });
@@ -19,13 +19,10 @@ export async function GET() {
           ? "Modérateur"
           : "Administrateur";
 
-  const initials = (() => {
-    const parts = session.nom.trim().split(/\s+/).filter(Boolean);
-    if (!parts.length) return "AD";
-    const first = parts[0]?.[0]?.toUpperCase() ?? "";
-    const second = parts[1]?.[0]?.toUpperCase() ?? "";
-    return `${first}${second}` || "AD";
-  })();
+  const parts = session.nom.trim().split(/\s+/).filter(Boolean);
+  const initials = parts.length
+    ? `${parts[0]?.[0]?.toUpperCase() ?? ""}${parts[1]?.[0]?.toUpperCase() ?? ""}` || "AD"
+    : "AD";
 
   return NextResponse.json({
     admin: {
