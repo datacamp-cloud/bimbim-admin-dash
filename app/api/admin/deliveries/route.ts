@@ -11,6 +11,44 @@ export async function GET(request: NextRequest) {
   try {
     const q = request.nextUrl.searchParams.get('q')?.trim()
     const status = request.nextUrl.searchParams.get('status')
+    const view = request.nextUrl.searchParams.get('view')
+
+    if (view === 'orders') {
+      const where = {
+        ...(q ? {
+          OR: [
+            { client: { nom: { contains: q, mode: 'insensitive' as const } } },
+            { adresse_enlevement: { contains: q, mode: 'insensitive' as const } },
+            { adresse_livraison: { contains: q, mode: 'insensitive' as const } },
+          ],
+        } : {}),
+        ...(status ? { statut: status as any } : {}),
+      }
+      const data = await prisma.commande.findMany({
+        where,
+        orderBy: { date_creation: 'desc' },
+        take: 100,
+        select: {
+          id: true, statut: true, total_livraisons: true, total_montant: true, date_creation: true,
+          client: { select: { nom: true, telephone: true } },
+        },
+      })
+      return NextResponse.json({
+        mode: 'orders',
+        data: data.map(o => ({
+          id: o.id,
+          client: o.client?.nom ?? 'Client',
+          phone: o.client?.telephone ?? '—',
+          from: '—',
+          to: '—',
+          courier: '—',
+          status: o.statut,
+          price: Number(o.total_montant),
+          time: o.date_creation.toISOString(),
+          deliveries: o.total_livraisons,
+        })),
+      })
+    }
     const where = {
       ...(q ? { OR: [{ nom_destinataire: { contains: q, mode: 'insensitive' as const } }, { telephone_destinataire: { contains: q } }, { adresse_ramassage: { contains: q, mode: 'insensitive' as const } }, { adresse_livraison: { contains: q, mode: 'insensitive' as const } }] } : {}),
       ...(status && ['en_attente','en_cours','livre','retour','echec'].includes(status) ? { statut: status as any } : {}),
