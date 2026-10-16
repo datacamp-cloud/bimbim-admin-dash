@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useEffect, useMemo, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Bell, Search, Trash2 } from 'lucide-react'
 import { AdminShell, Avatar, StatusBadge } from '@/components/layout/admin-shell'
