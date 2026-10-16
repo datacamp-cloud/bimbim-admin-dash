@@ -70,9 +70,23 @@ function SettingsPageContent() {
   const [auto, setAuto] = useState(false)
   const [alerts, setAlerts] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [preferencesError, setPreferencesError] = useState('')
   const [logs, setLogs] = useState<SystemLog[]>([])
   const [logsLoading, setLogsLoading] = useState(false)
   const [logsError, setLogsError] = useState("")
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem('bimbim-admin-preferences')
+      if (stored) {
+        const preferences = JSON.parse(stored)
+        setAuto(preferences.autoAssignment === true)
+        setAlerts(preferences.operationalAlerts === true)
+      }
+    } catch {
+      setPreferencesError('Impossible de lire les préférences locales de ce navigateur.')
+    }
+  }, [])
 
   useEffect(() => {
     fetch('/api/admin/settings', { cache: 'no-store' })
@@ -139,8 +153,15 @@ function SettingsPageContent() {
   }, [tab])
 
   const save = () => {
-    setSaved(true)
-    window.setTimeout(() => setSaved(false), 1500)
+    try {
+      window.localStorage.setItem('bimbim-admin-preferences', JSON.stringify({ autoAssignment: auto, operationalAlerts: alerts }))
+      setPreferencesError('')
+      setSaved(true)
+      window.setTimeout(() => setSaved(false), 1500)
+    } catch {
+      setSaved(false)
+      setPreferencesError('Impossible d’enregistrer les préférences dans ce navigateur.')
+    }
   }
 
   return (
@@ -169,7 +190,7 @@ function SettingsPageContent() {
             <section className="rounded-2xl border border-border bg-card p-6">
               <h2 className="font-semibold">Préférences de l’interface</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Ces options restent locales à cette interface.
+                Ces préférences sont enregistrées dans ce navigateur uniquement. Elles ne modifient pas les règles opérationnelles côté serveur.
               </p>
               <div className="mt-5 space-y-3">
                 <Toggle label="Attribution automatique" value={auto} onChange={setAuto} />
@@ -177,6 +198,7 @@ function SettingsPageContent() {
               </div>
             </section>
 
+            {preferencesError && <p role="alert" className="text-sm text-danger">{preferencesError}</p>}
             <SaveButton saved={saved} onClick={save} />
           </>
         )}

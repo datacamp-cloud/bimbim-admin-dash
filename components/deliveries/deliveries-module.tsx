@@ -37,18 +37,33 @@ export function DeliveriesModulePage() {
   const [q, setQ] = useState('')
   const [status, setStatus] = useState('')
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  const load = () => {
+  const load = async () => {
     setLoading(true)
+    setError('')
     const p = new URLSearchParams()
     if (q) p.set('q', q)
-    if (status) p.set('status', status)
-    if (view === 'orders') p.set('view', 'orders')
+    if (view === 'orders') {
+      p.set('view', 'orders')
+      if (status) p.set('status', status)
+    } else if (view === 'live') {
+      p.set('status', 'en_cours')
+    } else if (status) {
+      p.set('status', status)
+    }
 
-    fetch('/api/admin/deliveries?' + p.toString(), { cache: 'no-store' })
-      .then((r) => r.json())
-      .then((x) => setData(x.data ?? []))
-      .finally(() => setLoading(false))
+    try {
+      const response = await fetch('/api/admin/deliveries?' + p.toString(), { cache: 'no-store' })
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.error ?? 'Impossible de charger les données.')
+      setData(result.data ?? [])
+    } catch {
+      setData([])
+      setError('Impossible de charger les données. Réessayez dans quelques instants.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => {
@@ -58,11 +73,13 @@ export function DeliveriesModulePage() {
 
   return (
     <AdminShell
-      title={view === 'orders' ? 'Commandes' : 'Livraisons'}
+      title={view === 'orders' ? 'Commandes' : view === 'live' ? 'Suivi en temps réel' : 'Livraisons'}
       subtitle={
         view === 'orders'
           ? 'Toutes les commandes réelles de Bimbim.'
-          : 'Toutes les livraisons réelles de Bimbim.'
+          : view === 'live'
+            ? 'Livraisons actuellement en cours. Cette vue reflète le statut enregistré en base.'
+            : 'Toutes les livraisons réelles de Bimbim.'
       }
     >
       <div className="rounded-2xl border border-border bg-card overflow-hidden">
@@ -73,7 +90,7 @@ export function DeliveriesModulePage() {
             placeholder="Rechercher..."
             className="flex-1 rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none"
           />
-          <select
+          {view !== 'live' && <select
             value={status}
             onChange={(e) => setStatus(e.target.value)}
             className="rounded-xl border border-border bg-background px-3 py-2.5 text-sm"
@@ -95,14 +112,16 @@ export function DeliveriesModulePage() {
                 <option value="echec">Échec</option>
               </>
             )}
-          </select>
+          </select>}
         </div>
 
         {loading ? (
           <div className="p-10 text-center text-sm text-muted-foreground">Chargement...</div>
+        ) : error ? (
+          <div role="alert" className="p-10 text-center text-sm text-danger">{error}</div>
         ) : data.length === 0 ? (
           <div className="p-10 text-center text-sm text-muted-foreground">
-            Aucune {view === 'orders' ? 'commande' : 'livraison'} trouvée.
+            Aucune {view === 'orders' ? 'commande' : view === 'live' ? 'livraison en cours' : 'livraison'} trouvée.
           </div>
         ) : (
           <div className="divide-y divide-border">

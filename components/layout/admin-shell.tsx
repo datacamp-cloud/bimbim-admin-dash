@@ -37,7 +37,7 @@ const nav = [
     section: "UTILISATEURS",
     items: [
       { label: "Partenaires", href: "/users?type=partners", icon: Users },
-      { label: "Coursiers", href: "/couriers", icon: Truck },
+      { label: "Coursiers", href: "/coursiers", icon: Truck },
       { label: "Utilisateurs", href: "/users", icon: UserRound },
     ],
   },
@@ -51,15 +51,14 @@ const nav = [
       },
       { label: "Toutes les livraisons", href: "/deliveries", icon: Box },
       {
-        label: "Suivi en temps réel",
+        label: "Livraisons en cours",
         href: "/deliveries?view=live",
         icon: MapPin,
       },
       {
         label: "Retour de colis",
-        href: "/deliveries?view=returns",
+        href: "/returns",
         icon: Package,
-        count: 3,
       },
     ],
   },
@@ -82,7 +81,7 @@ const nav = [
   {
     section: "CONTENU & COMMUNICATION",
     items: [
-      { label: "Notifications", href: "/notifications", icon: Bell, count: 3 },
+      { label: "Notifications", href: "/notifications", icon: Bell },
       {
         label: "Messages",
         href: "/notifications?view=messages",
@@ -145,20 +144,11 @@ function SidebarNav({ onNavigate }: { onNavigate: () => void }) {
                     "bg-primary text-primary-foreground font-semibold shadow-sm hover:bg-primary hover:text-primary-foreground",
                 )}
               >
+                
                 <span className="flex items-center gap-3">
                   <Icon className="size-[16px]" />
                   {item.label}
                 </span>
-                {item.count && (
-                  <span
-                    className={cn(
-                      "flex size-5 items-center justify-center rounded-full text-[10px]",
-                      active ? "bg-white/15" : "bg-danger/10 text-danger",
-                    )}
-                  >
-                    {item.count}
-                  </span>
-                )}
               </Link>
             );
           })}
@@ -190,11 +180,6 @@ function SidebarNavFallback() {
                   <Icon className="size-[16px]" />
                   {item.label}
                 </span>
-                {item.count && (
-                  <span className="flex size-5 items-center justify-center rounded-full bg-danger/10 text-[10px] text-danger">
-                    {item.count}
-                  </span>
-                )}
               </Link>
             );
           })}
@@ -426,9 +411,6 @@ export function AdminShell({
               aria-label="Notifications"
             >
               <Bell className="size-5" />
-              <span className="absolute right-1.5 top-1.5 flex size-4 items-center justify-center rounded-full bg-danger text-[9px] font-bold text-white">
-                3
-              </span>
             </button>
             <button
               className="rounded-xl p-2.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"

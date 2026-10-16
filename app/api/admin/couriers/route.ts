@@ -20,6 +20,8 @@ export async function GET(request: NextRequest) {
               { prenom: { contains: q, mode: 'insensitive' as const } },
               { pseudo: { contains: q, mode: 'insensitive' as const } },
               { matricule: { contains: q, mode: 'insensitive' as const } },
+              { telephone: { contains: q } },
+              { adresse: { contains: q, mode: 'insensitive' as const } },
             ],
           }
         : {}),
