@@ -81,7 +81,7 @@ const nav = [
   {
     section: "CONTENU & COMMUNICATION",
     items: [
-      { label: "Notifications", href: "/notifications", icon: Bell, count: 3 },
+      { label: "Notifications", href: "/notifications", icon: Bell },
       {
         label: "Messages",
         href: "/notifications?view=messages",
