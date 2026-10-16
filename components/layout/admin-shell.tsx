@@ -51,7 +51,7 @@ const nav = [
       },
       { label: "Toutes les livraisons", href: "/deliveries", icon: Box },
       {
-        label: "Suivi en temps réel",
+        label: "Livraisons en cours",
         href: "/deliveries?view=live",
         icon: MapPin,
       },
