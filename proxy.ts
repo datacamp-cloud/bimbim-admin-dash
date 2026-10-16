@@ -100,7 +100,7 @@ export async function proxy(request: NextRequest) {
   const isProtectedPage =
     path === "/dashboard" ||
     path.startsWith("/users") ||
-    path.startsWith("/couriers") ||
+    path.startsWith("/coursiers") ||
     path.startsWith("/deliveries") ||
     path.startsWith("/settings") ||
     path.startsWith("/notifications");
@@ -144,7 +144,7 @@ export const config = {
   matcher: [
     "/dashboard/:path*",
     "/users/:path*",
-    "/couriers/:path*",
+    "/coursiers/:path*",
     "/deliveries/:path*",
     "/settings/:path*",
     "/notifications/:path*",

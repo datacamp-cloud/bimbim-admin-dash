@@ -25,14 +25,14 @@ type StatCard = {
   icon: LucideIcon
 }
 
-export function CouriersModule() {
+export function CoursiersModule() {
   const [data, setData] = useState<Courier[]>([])
   const [stats, setStats] = useState({ total: 0, actifs: 0, disponibles: 0, offline: 0 })
   const [q, setQ] = useState('')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/admin/couriers', { cache: 'no-store' })
+    fetch('/api/admin/coursiers', { cache: 'no-store' })
       .then((r) => r.json())
       .then((x) => {
         setData(x.data ?? [])
