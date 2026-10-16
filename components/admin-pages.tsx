@@ -25,39 +25,47 @@ function UsersPageContent() {
   const searchParams = useSearchParams()
   const type = searchParams.get('type')
   const isPartnersPage = type === 'partners'
-
   const [data, setData] = useState<any[]>([])
   const [stats, setStats] = useState({ total: 0, actifs: 0, nouveaux: 0 })
   const [q, setQ] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   useEffect(() => {
-    const url = new URL('/api/admin/users', window.location.origin)
-    if (q) url.searchParams.set('q', q)
-    if (isPartnersPage) url.searchParams.set('type', 'partners')
-
-    const t = setTimeout(() => {
-      fetch(url.toString(), { cache: 'no-store' })
-        .then((r) => r.json())
-        .then((x) => {
-          setData(x.data ?? [])
-          setStats(x.stats ?? { total: 0, actifs: 0, nouveaux: 0 })
-        })
+    let cancelled = false
+    const controller = new AbortController()
+    const t = setTimeout(async () => {
+      setLoading(true)
+      setError('')
+      const url = new URL('/api/admin/users', window.location.origin)
+      if (q.trim()) url.searchParams.set('q', q.trim())
+      if (isPartnersPage) url.searchParams.set('type', 'partners')
+      try {
+        const response = await fetch(url.toString(), { cache: 'no-store', signal: controller.signal })
+        const payload = await response.json()
+        if (!response.ok) throw new Error(payload?.error ?? 'Impossible de charger les utilisateurs.')
+        if (!cancelled) {
+          setData(payload.data ?? [])
+          setStats(payload.stats ?? { total: 0, actifs: 0, nouveaux: 0 })
+        }
+      } catch (err) {
+        if (!cancelled && !(err instanceof DOMException && err.name === 'AbortError')) {
+          setData([])
+          setError('Impossible de charger les utilisateurs. Réessayez.')
+        }
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
     }, 250)
-
-    return () => clearTimeout(t)
+    return () => {
+      cancelled = true
+      controller.abort()
+      clearTimeout(t)
+    }
   }, [q, isPartnersPage])
 
-  const filtered = useMemo(
-    () =>
-      data.filter((u) => {
-        const haystack = `${u.name ?? u.nom ?? ''} ${u.email ?? ''} ${u.telephone ?? ''}`.toLowerCase()
-        return haystack.includes(q.toLowerCase())
-      }),
-    [data, q],
-  )
-
   return (
-    <AdminShell title={isPartnersPage ? 'Partenaires' : 'Utilisateurs'} subtitle={isPartnersPage ? 'Clients entreprise actifs.' : 'Données clients issues de Neon.'}>
+    <AdminShell title={isPartnersPage ? 'Partenaires' : 'Utilisateurs'} subtitle={isPartnersPage ? 'Clients entreprise enregistrés.' : 'Données clients issues de Neon.'}>
       <div className="grid gap-3 sm:grid-cols-3">
         {[
           ['Total', stats.total],
@@ -70,34 +78,35 @@ function UsersPageContent() {
           </div>
         ))}
       </div>
-
       <div className="mt-6 rounded-2xl border border-border bg-card overflow-hidden">
         <div className="border-b border-border p-5">
           <div className="relative max-w-lg">
             <Search className="absolute left-3 top-3 size-4 text-muted-foreground" />
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Nom, email ou téléphone..."
-              className="w-full rounded-xl border border-border bg-background py-2.5 pl-10 pr-3 text-sm outline-none"
-            />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Nom, email ou téléphone..." className="w-full rounded-xl border border-border bg-background py-2.5 pl-10 pr-3 text-sm outline-none" />
           </div>
         </div>
-
-        <div className="divide-y divide-border">
-          {filtered.map((u) => (
-            <div key={u.id} className="grid gap-3 px-5 py-4 md:grid-cols-[1.4fr_1.3fr_1fr_100px_100px] md:items-center">
-              <div className="flex items-center gap-3">
-                <Avatar initials={(u.name ?? u.nom ?? '?').split(' ').map((x: string) => x[0]).join('').slice(0, 2)} />
-                <span className="text-sm font-medium">{u.name ?? u.nom ?? 'Sans nom'}</span>
+        {loading ? (
+          <div className="p-10 text-center text-sm text-muted-foreground">Chargement...</div>
+        ) : error ? (
+          <div role="alert" className="p-10 text-center text-sm text-danger">{error}</div>
+        ) : data.length === 0 ? (
+          <div className="p-10 text-center text-sm text-muted-foreground">Aucun {isPartnersPage ? 'partenaire' : 'utilisateur'} trouvé.</div>
+        ) : (
+          <div className="divide-y divide-border">
+            {data.map((u) => (
+              <div key={u.id} className="grid gap-3 px-5 py-4 md:grid-cols-[1.4fr_1.3fr_1fr_100px_100px] md:items-center">
+                <div className="flex items-center gap-3">
+                  <Avatar initials={(u.name ?? u.nom ?? '?').split(' ').map((x: string) => x[0]).join('').slice(0, 2)} />
+                  <span className="text-sm font-medium">{u.name ?? u.nom ?? 'Sans nom'}</span>
+                </div>
+                <span className="text-sm text-muted-foreground">{u.email ?? '—'}</span>
+                <span className="text-sm text-muted-foreground">{u.telephone ?? '—'}</span>
+                <span className="text-sm">{u.deliveries ?? 0}</span>
+                <StatusBadge status={u.statut} />
               </div>
-              <span className="text-sm text-muted-foreground">{u.email ?? '—'}</span>
-              <span className="text-sm text-muted-foreground">{u.telephone}</span>
-              <span className="text-sm">{u.deliveries}</span>
-              <StatusBadge status={u.statut} />
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </AdminShell>
   )
