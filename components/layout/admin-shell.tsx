@@ -148,12 +148,6 @@ function SidebarNav({ onNavigate }: { onNavigate: () => void }) {
                   <Icon className="size-[16px]" />
                   {item.label}
                 </span>
-                {item.count && (
-                  <span
-                    className={cn(
-                      "flex size-5 items-center justify-center rounded-full text-[10px]",
-                      active ? "bg-white/15" : "bg-danger/10 text-danger",
-                    )}
                   >
                     {item.count}
                   </span>
@@ -189,11 +183,6 @@ function SidebarNavFallback() {
                   <Icon className="size-[16px]" />
                   {item.label}
                 </span>
-                {item.count && (
-                  <span className="flex size-5 items-center justify-center rounded-full bg-danger/10 text-[10px] text-danger">
-                    {item.count}
-                  </span>
-                )}
               </Link>
             );
           })}
@@ -425,9 +414,6 @@ export function AdminShell({
               aria-label="Notifications"
             >
               <Bell className="size-5" />
-              <span className="absolute right-1.5 top-1.5 flex size-4 items-center justify-center rounded-full bg-danger text-[9px] font-bold text-white">
-                3
-              </span>
             </button>
             <button
               className="rounded-xl p-2.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
