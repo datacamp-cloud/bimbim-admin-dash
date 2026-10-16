@@ -144,14 +144,11 @@ function SidebarNav({ onNavigate }: { onNavigate: () => void }) {
                     "bg-primary text-primary-foreground font-semibold shadow-sm hover:bg-primary hover:text-primary-foreground",
                 )}
               >
+                
                 <span className="flex items-center gap-3">
                   <Icon className="size-[16px]" />
                   {item.label}
                 </span>
-                  >
-                    {item.count}
-                  </span>
-                )}
               </Link>
             );
           })}
