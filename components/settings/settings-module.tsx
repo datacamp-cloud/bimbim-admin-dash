@@ -70,7 +70,6 @@ function SettingsPageContent() {
   const [auto, setAuto] = useState(false)
   const [alerts, setAlerts] = useState(false)
   const [saved, setSaved] = useState(false)
-  const [preferencesLoaded, setPreferencesLoaded] = useState(false)
   const [preferencesError, setPreferencesError] = useState('')
   const [logs, setLogs] = useState<SystemLog[]>([])
   const [logsLoading, setLogsLoading] = useState(false)
@@ -86,8 +85,6 @@ function SettingsPageContent() {
       }
     } catch {
       setPreferencesError('Impossible de lire les préférences locales de ce navigateur.')
-    } finally {
-      setPreferencesLoaded(true)
     }
   }, [])
 
