@@ -57,7 +57,7 @@ const nav = [
       },
       {
         label: "Retour de colis",
-        href: "/deliveries?view=returns",
+        href: "/returns",
         icon: Package,
         count: 3,
       },
