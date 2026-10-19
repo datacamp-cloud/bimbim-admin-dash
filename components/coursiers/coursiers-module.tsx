@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Search, Star, Truck, Users, WifiOff } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { AdminShell, Avatar, StatusBadge } from '@/components/layout/admin-shell'
@@ -25,26 +25,44 @@ type StatCard = {
   icon: LucideIcon
 }
 
-export function CouriersModule() {
+export function CoursiersModule() {
   const [data, setData] = useState<Courier[]>([])
   const [stats, setStats] = useState({ total: 0, actifs: 0, disponibles: 0, offline: 0 })
   const [q, setQ] = useState('')
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   useEffect(() => {
-    fetch('/api/admin/couriers', { cache: 'no-store' })
-      .then((r) => r.json())
-      .then((x) => {
-        setData(x.data ?? [])
-        setStats(x.stats ?? { total: 0, actifs: 0, disponibles: 0, offline: 0 })
-      })
-      .finally(() => setLoading(false))
-  }, [])
-
-  const filtered = useMemo(
-    () => data.filter((c) => `${c.name} ${c.matricule ?? ''} ${c.zone}`.toLowerCase().includes(q.toLowerCase())),
-    [data, q],
-  )
+    let cancelled = false
+    const controller = new AbortController()
+    const timer = setTimeout(async () => {
+      setLoading(true)
+      setError('')
+      const params = new URLSearchParams()
+      if (q.trim()) params.set('q', q.trim())
+      try {
+        const response = await fetch('/api/admin/couriers?' + params.toString(), { cache: 'no-store', signal: controller.signal })
+        const payload = await response.json()
+        if (!response.ok) throw new Error(payload?.error ?? 'Impossible de charger les coursiers.')
+        if (!cancelled) {
+          setData(payload.data ?? [])
+          setStats(payload.stats ?? { total: 0, actifs: 0, disponibles: 0, offline: 0 })
+        }
+      } catch (err) {
+        if (!cancelled && !(err instanceof DOMException && err.name === 'AbortError')) {
+          setData([])
+          setError('Impossible de charger les coursiers. Réessayez.')
+        }
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }, 200)
+    return () => {
+      cancelled = true
+      controller.abort()
+      clearTimeout(timer)
+    }
+  }, [q])
 
   const statCards: StatCard[] = [
     { label: 'Total', value: stats.total, icon: Users },
@@ -81,11 +99,13 @@ export function CouriersModule() {
 
           {loading ? (
             <div className="p-10 text-center text-sm text-muted-foreground">Chargement...</div>
-          ) : filtered.length === 0 ? (
+          ) : error ? (
+            <div role="alert" className="p-10 text-center text-sm text-danger">{error}</div>
+          ) : data.length === 0 ? (
             <div className="p-10 text-center text-sm text-muted-foreground">Aucun coursier.</div>
           ) : (
             <div className="divide-y divide-border">
-              {filtered.map((c) => (
+              {data.map((c) => (
                 <div key={c.id} className="grid gap-3 px-5 py-4 md:grid-cols-[1.5fr_1fr_1fr_100px_90px] md:items-center">
                   <div className="flex items-center gap-3">
                     <Avatar initials={c.initials} />

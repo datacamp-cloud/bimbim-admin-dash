@@ -5,6 +5,7 @@ import { getVerifiedAdminSession } from '@/lib/admin-auth'
 export const dynamic = 'force-dynamic'
 
 const channels = new Set(['sms', 'push', 'email'])
+const statuses = new Set(['envoye', 'echec', 'en_attente'])
 
 export async function GET(request: NextRequest) {
   const session = await getVerifiedAdminSession()
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
       where: {
         user_type: 'admin',
         ...(channels.has(channel) ? { type_notification: channel as 'sms' | 'push' | 'email' } : {}),
-        ...(status ? { statut_envoi: status as 'envoye' | 'echec' | 'en_attente' } : {}),
+        ...(statuses.has(status) ? { statut_envoi: status as 'envoye' | 'echec' | 'en_attente' } : {}),
       },
       orderBy: { date_envoi: 'desc' },
       take: limit,
