@@ -75,7 +75,7 @@ export function SiteContentManager() {
         </div>
         <input value={draft.title} onChange={e => setDraft({ ...draft, title: e.target.value })} placeholder="Titre" className="rounded-lg border border-border bg-card px-3 py-2 text-sm" />
         <textarea rows={3} value={draft.body} onChange={e => setDraft({ ...draft, body: e.target.value })} placeholder="Texte / description" className="rounded-lg border border-border bg-card px-3 py-2 text-sm" />
-        <input type="url" value={draft.image_url} onChange={e => setDraft({ ...draft, image_url: e.target.value })} placeholder="URL HTTPS de l'image" className="rounded-lg border border-border bg-card px-3 py-2 text-sm" />
+        <input type="text" value={draft.image_url} onChange={e => setDraft({ ...draft, image_url: e.target.value })} placeholder="URL HTTPS de l'image" className="rounded-lg border border-border bg-card px-3 py-2 text-sm" />
         <div className="grid gap-3 md:grid-cols-2">
           <input value={draft.button_label} onChange={e => setDraft({ ...draft, button_label: e.target.value })} placeholder="Texte du bouton" className="rounded-lg border border-border bg-card px-3 py-2 text-sm" />
           <input value={draft.button_url} onChange={e => setDraft({ ...draft, button_url: e.target.value })} placeholder="Lien du bouton" className="rounded-lg border border-border bg-card px-3 py-2 text-sm" />
