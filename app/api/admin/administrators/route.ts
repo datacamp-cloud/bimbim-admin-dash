@@ -112,7 +112,7 @@ export async function DELETE(request: NextRequest) {
     const activeCount = await prisma.administrateur.count({ where: { role: "super_admin", statut: "actif" } });
     if (activeCount <= 1) return NextResponse.json({ error: "Impossible de supprimer le dernier super administrateur actif." }, { status: 409 });
   }
-  await prisma.administrateur.delete({ where: { id } });
-  await prisma.logSysteme.create({ data: { categorie: "admin.accounts", niveau: "warning", message: `Compte administrateur supprimé: ${target.login}`, meta_json: { actor_id: session.sub, target_id: id } } });
+  await prisma.administrateur.update({ where: { id }, data: { statut: "inactif", connecte: false } });
+  await prisma.logSysteme.create({ data: { categorie: "admin.accounts", niveau: "warning", message: `Accès administrateur révoqué: ${target.login}`, meta_json: { actor_id: session.sub, target_id: id } } });
   return NextResponse.json({ success: true });
 }
