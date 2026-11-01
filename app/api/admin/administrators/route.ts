@@ -72,6 +72,10 @@ export async function PATCH(request: NextRequest) {
     const data: Record<string, unknown> = {};
     if (body.role !== undefined) {
       if (!roles.includes(body.role)) return NextResponse.json({ error: "Rôle invalide." }, { status: 400 });
+      if (existing.role === "super_admin" && existing.statut === "actif" && body.role !== "super_admin") {
+        const activeCount = await prisma.administrateur.count({ where: { role: "super_admin", statut: "actif" } });
+        if (activeCount <= 1) return NextResponse.json({ error: "Impossible de rétrograder le dernier super administrateur actif." }, { status: 409 });
+      }
       data.role = body.role;
     }
     if (body.statut !== undefined) {
