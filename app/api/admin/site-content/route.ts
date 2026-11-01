@@ -33,14 +33,14 @@ function normalize(body: Record<string, unknown>) {
 
 export async function GET() {
   const auth = await requireSuperAdmin();
-  if (auth.error) return auth.error;
+  if ("error" in auth) return auth.error;
   const data = await prisma.siteContent.findMany({ orderBy: [{ section: "asc" }, { sort_order: "asc" }, { id: "asc" }] });
   return NextResponse.json({ data });
 }
 
 export async function POST(request: NextRequest) {
   const auth = await requireSuperAdmin();
-  if (auth.error) return auth.error;
+  if ("error" in auth) return auth.error;
   try {
     const data = normalize(await request.json());
     const created = await prisma.siteContent.create({ data });
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   const auth = await requireSuperAdmin();
-  if (auth.error) return auth.error;
+  if ("error" in auth) return auth.error;
   try {
     const body = await request.json();
     const id = Number(body.id);
@@ -69,7 +69,7 @@ export async function PATCH(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   const auth = await requireSuperAdmin();
-  if (auth.error) return auth.error;
+  if ("error" in auth) return auth.error;
   const id = Number(request.nextUrl.searchParams.get("id"));
   if (!Number.isInteger(id) || id <= 0) return NextResponse.json({ error: "Identifiant invalide." }, { status: 400 });
   try {
