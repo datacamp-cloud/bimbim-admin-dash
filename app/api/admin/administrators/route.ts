@@ -88,7 +88,7 @@ export async function PATCH(request: NextRequest) {
     }
     if (Object.keys(data).length === 0) return NextResponse.json({ error: "Aucune modification fournie." }, { status: 400 });
     const updated = await prisma.administrateur.update({
-      where: { id }, data,
+      where: { id }, data: data as any,
       select: { id: true, nom: true, email: true, login: true, role: true, statut: true, connecte: true, date_connexion: true },
     });
     await prisma.logSysteme.create({ data: { categorie: "admin.accounts", niveau: "warning", message: `Compte administrateur modifié: ${existing.login}`, meta_json: { actor_id: session.sub, target_id: id, fields: Object.keys(data) } } });
