@@ -71,7 +71,7 @@ export function AdminUsersManager() {
   }
 
   async function remove(item: Admin) {
-    if (!window.confirm(`Supprimer le compte administrateur « ${item.login} » ?`)) return
+    if (!window.confirm(`Révoquer l’accès du compte administrateur « ${item.login} » ?`)) return
     setBusy(true)
     setError('')
     try {
@@ -114,7 +114,7 @@ export function AdminUsersManager() {
             <select aria-label={`Statut de ${item.login}`} disabled={busy} value={item.statut} onChange={e => void update(item.id, { statut: e.target.value })} className="rounded-lg border border-border bg-background px-2 py-2 text-xs">
               <option value="actif">Actif</option><option value="inactif">Inactif</option><option value="suspendu">Suspendu</option>
             </select>
-            <button type="button" disabled={busy} onClick={() => void remove(item)} className="rounded-lg border border-danger/20 px-3 py-2 text-xs font-medium text-danger disabled:opacity-50">Supprimer</button>
+            <button type="button" disabled={busy} onClick={() => void remove(item)} className="rounded-lg border border-danger/20 px-3 py-2 text-xs font-medium text-danger disabled:opacity-50">Révoquer</button>
           </div>
         ))}
       </div>
