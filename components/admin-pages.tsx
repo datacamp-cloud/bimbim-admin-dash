@@ -102,6 +102,9 @@ function UsersPageContent() {
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Nom, email ou téléphone..." className="w-full rounded-xl border border-border bg-background py-2.5 pl-10 pr-3 text-sm outline-none" />
           </div>
         </div>
+        <div className="hidden border-b border-border bg-muted/30 px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground md:grid md:grid-cols-[1.4fr_1.3fr_1fr_100px_100px]">
+          <span>Nom</span><span>Email</span><span>Téléphone</span><span>Livraisons</span><span>Statut</span>
+        </div>
         {loading ? (
           <div className="p-10 text-center text-sm text-muted-foreground">Chargement...</div>
         ) : error ? (
