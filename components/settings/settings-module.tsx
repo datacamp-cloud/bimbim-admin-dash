@@ -15,6 +15,7 @@ import {
   Wallet,
 } from 'lucide-react'
 import { AdminShell } from '@/components/layout/admin-shell'
+import { AdminUsersManager } from '@/components/settings/admin-users-manager'
 
 type PayTransaction = {
   id: number | string
@@ -276,6 +277,7 @@ function SettingsPageContent() {
                 <SecurityItem label="Surveillance" value="Active" />
               </div>
             </section>
+            <AdminUsersManager />
             <section className="rounded-2xl border border-warning/20 bg-warning/5 p-5">
               <div className="flex gap-3">
                 <LockKeyhole className="mt-0.5 size-5 text-warning" />
