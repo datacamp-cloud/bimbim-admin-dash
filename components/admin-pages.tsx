@@ -30,6 +30,23 @@ function UsersPageContent() {
   const [q, setQ] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [selected, setSelected] = useState<any>(null)
+  const [detailLoading, setDetailLoading] = useState(false)
+  const [detailError, setDetailError] = useState('')
+
+  async function openDetails(id: number) {
+    setSelected({ id })
+    setDetailLoading(true)
+    setDetailError('')
+    try {
+      const response = await fetch(`/api/admin/users/${id}`, { cache: 'no-store' })
+      const payload = await response.json()
+      if (!response.ok) throw new Error(payload.error || 'Impossible de charger la fiche.')
+      setSelected(payload.data)
+    } catch (err) {
+      setDetailError(err instanceof Error ? err.message : 'Impossible de charger la fiche.')
+    } finally { setDetailLoading(false) }
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -94,7 +111,7 @@ function UsersPageContent() {
         ) : (
           <div className="divide-y divide-border">
             {data.map((u) => (
-              <div key={u.id} className="grid gap-3 px-5 py-4 md:grid-cols-[1.4fr_1.3fr_1fr_100px_100px] md:items-center">
+              <button type="button" key={u.id} onClick={() => void openDetails(u.id)} className="grid w-full gap-3 px-5 py-4 text-left hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring md:grid-cols-[1.4fr_1.3fr_1fr_100px_100px] md:items-center">
                 <div className="flex items-center gap-3">
                   <Avatar initials={(u.name ?? u.nom ?? '?').split(' ').map((x: string) => x[0]).join('').slice(0, 2)} />
                   <span className="text-sm font-medium">{u.name ?? u.nom ?? 'Sans nom'}</span>
@@ -103,11 +120,36 @@ function UsersPageContent() {
                 <span className="text-sm text-muted-foreground">{u.telephone ?? '—'}</span>
                 <span className="text-sm">{u.deliveries ?? 0}</span>
                 <StatusBadge status={u.statut} />
-              </div>
+              </button>
             ))}
           </div>
         )}
       </div>
+      {selected && (
+        <div role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelected(null) }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <section role="dialog" aria-modal="true" aria-labelledby="user-detail-title" className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-border bg-card p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div><h2 id="user-detail-title" className="text-lg font-semibold">Fiche {isPartnersPage ? 'partenaire' : 'client'}</h2><p className="mt-1 text-sm text-muted-foreground">Informations du compte et activité enregistrée.</p></div>
+              <button type="button" onClick={() => setSelected(null)} className="rounded-lg border border-border px-3 py-2 text-sm">Fermer</button>
+            </div>
+            {detailLoading ? <p className="py-10 text-center text-sm text-muted-foreground">Chargement de la fiche...</p> : detailError ? <p role="alert" className="py-6 text-sm text-danger">{detailError}</p> : (
+              <div className="mt-6 space-y-6">
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {[
+                    ['Nom', selected.nom], ['Type', selected.type_client], ['Email', selected.email],
+                    ['Téléphone', selected.telephone], ['Adresse', selected.adresse_principale], ['Statut', selected.statut],
+                    ['Vérifié', selected.est_verifie ? 'Oui' : 'Non'], ['Livraisons', selected.livraisons], ['Commandes', selected.commandes_count],
+                    ['Points cumulés', selected.points_cumules], ['Livraisons gratuites', selected.livraisons_gratuites],
+                    ['Inscription', selected.date_creation ? new Date(selected.date_creation).toLocaleDateString('fr-FR') : '—'],
+                  ].map(([label, value]) => <div key={String(label)} className="rounded-xl border border-border bg-background p-3"><p className="text-xs text-muted-foreground">{label}</p><p className="mt-1 break-words text-sm font-medium">{value ?? '—'}</p></div>)}
+                </div>
+                <div><h3 className="font-semibold">Commandes récentes</h3>{selected.commandes?.length ? <div className="mt-2 divide-y divide-border rounded-xl border border-border">{selected.commandes.map((order: any) => <div key={order.id} className="flex flex-wrap justify-between gap-2 p-3 text-sm"><span>Commande #{order.id} · {order.statut}</span><span>{Number(order.total_montant).toLocaleString('fr-FR')} FCFA</span></div>)}</div> : <p className="mt-2 text-sm text-muted-foreground">Aucune commande enregistrée.</p>}</div>
+                <div><h3 className="font-semibold">Documents</h3>{selected.documents?.length ? <div className="mt-2 space-y-2">{selected.documents.map((doc: any) => <div key={doc.id} className="flex flex-wrap justify-between gap-2 rounded-xl border border-border p-3 text-sm"><span>{doc.type_document} · {doc.nom_fichier}</span><span className="text-muted-foreground">{doc.statut}</span></div>)}</div> : <p className="mt-2 text-sm text-muted-foreground">Aucun document enregistré.</p>}</div>
+              </div>
+            )}
+          </section>
+        </div>
+      )}
     </AdminShell>
   )
 }
