@@ -27,7 +27,7 @@ function normalize(body: Record<string, unknown>) {
     button_label: body.button_label == null ? null : String(body.button_label).slice(0, 100),
     button_url: buttonUrl,
     enabled: body.enabled !== false,
-    sort_order: Number.isFinite(Number(body.sort_order)) ? Number(body.sort_order) : 0,
+    sort_order: Number.isFinite(Number(body.sort_order)) ? Math.trunc(Number(body.sort_order)) : 0,
   };
 }
 
