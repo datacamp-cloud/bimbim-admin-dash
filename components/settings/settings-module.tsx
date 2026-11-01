@@ -279,7 +279,7 @@ function SettingsPageContent() {
                 <SecurityItem label="Surveillance" value="Active" />
               </div>
             </section>
-            <AdminUsersManager />
+            {admin?.role === 'super_admin' && <AdminUsersManager />}
             <section className="rounded-2xl border border-warning/20 bg-warning/5 p-5">
               <div className="flex gap-3">
                 <LockKeyhole className="mt-0.5 size-5 text-warning" />
