@@ -102,8 +102,8 @@ function UsersPageContent() {
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Nom, email ou téléphone..." className="w-full rounded-xl border border-border bg-background py-2.5 pl-10 pr-3 text-sm outline-none" />
           </div>
         </div>
-        <div className="hidden border-b border-border bg-muted/30 px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground md:grid md:grid-cols-[1.4fr_1.3fr_1fr_100px_100px]">
-          <span>Nom</span><span>Email</span><span>Téléphone</span><span>Livraisons</span><span>Statut</span>
+        <div className="hidden border-b border-border bg-muted/30 px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground md:grid md:grid-cols-[1.5fr_1.3fr_1fr_100px]">
+          <span>Compte</span><span>Email</span><span>Livraisons</span><span>Statut</span>
         </div>
         {loading ? (
           <div className="p-10 text-center text-sm text-muted-foreground">Chargement...</div>
@@ -114,13 +114,15 @@ function UsersPageContent() {
         ) : (
           <div className="divide-y divide-border">
             {data.map((u) => (
-              <button type="button" key={u.id} onClick={() => void openDetails(u.id)} className="grid w-full gap-3 px-5 py-4 text-left hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring md:grid-cols-[1.4fr_1.3fr_1fr_100px_100px] md:items-center">
-                <div className="flex items-center gap-3">
+              <button type="button" key={u.id} onClick={() => void openDetails(u.id)} className="grid w-full gap-3 px-5 py-4 text-left hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring md:grid-cols-[1.5fr_1.3fr_1fr_100px] md:items-center">
+                <div className="flex min-w-0 items-center gap-3">
                   <Avatar initials={(u.name ?? u.nom ?? '?').split(' ').map((x: string) => x[0]).join('').slice(0, 2)} />
-                  <span className="text-sm font-medium">{u.name ?? u.nom ?? 'Sans nom'}</span>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{u.name ?? u.nom ?? 'Sans nom'}</p>
+                    <p className="mt-0.5 truncate text-xs text-muted-foreground">{u.telephone ?? 'Téléphone non renseigné'}</p>
+                  </div>
                 </div>
-                <span className="text-sm text-muted-foreground">{u.email ?? '—'}</span>
-                <span className="text-sm text-muted-foreground">{u.telephone ?? '—'}</span>
+                <span className="truncate text-sm text-muted-foreground">{u.email ?? '—'}</span>
                 <span className="text-sm">{u.deliveries ?? 0}</span>
                 <StatusBadge status={u.statut} />
               </button>
