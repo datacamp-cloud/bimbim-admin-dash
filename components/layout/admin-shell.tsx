@@ -68,15 +68,10 @@ const nav = [
     items: [
       {
         label: "Transactions",
-        href: "/settings?tab=transactions",
-        icon: Wallet,
-      },
-      {
-        label: "Retraits / Dépôts",
         href: "/settings?tab=wallet",
         icon: Wallet,
       },
-      { label: "Factures", href: "/settings?tab=invoices", icon: FileText },
+      { label: "Comptabilité", href: "/settings?tab=invoices", icon: FileText },
     ],
   },
   {

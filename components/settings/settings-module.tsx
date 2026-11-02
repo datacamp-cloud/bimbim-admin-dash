@@ -176,8 +176,7 @@ function SettingsPageContent() {
                   <Settings className="size-5" />
                 </span>
                 <div>
-                  <h2 className="font-semibold">Administrateur</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">Informations récupérées depuis Neon.</p>
+                  <h2 className="font-semibold">Profil administrateur</h2>
                 </div>
               </div>
               <div className="mt-6 grid gap-5 sm:grid-cols-2">
@@ -204,7 +203,7 @@ function SettingsPageContent() {
           </>
         )}
 
-        {tab === 'transactions' && (
+        {/* {tab === 'transactions' && (
           <>
             <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <Metric icon={Wallet} label="Solde global" value={money(balance)} />
@@ -222,7 +221,7 @@ function SettingsPageContent() {
             </section>
             <TransactionTable transactions={transactions} />
           </>
-        )}
+        )} */}
 
         {tab === 'wallet' && (
           <>
@@ -232,7 +231,7 @@ function SettingsPageContent() {
               <Metric icon={ArrowUpFromLine} label="Bonus attribués" value={money(bonuses)} />
             </section>
             <section className="rounded-2xl border border-border bg-primary p-6 text-primary-foreground">
-              <p className="text-sm opacity-80">Solde global Bimbim Pay</p>
+              <p className="text-sm opacity-80">Solde global bimbim Pay</p>
               <p className="mt-2 text-3xl font-bold">{money(balance)}</p>
               <div className="mt-5 flex flex-wrap gap-3">
                 <button type="button" className="inline-flex items-center gap-2 rounded-xl bg-white/15 px-4 py-2.5 text-sm font-semibold hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60">
@@ -252,9 +251,9 @@ function SettingsPageContent() {
             <span className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               <FileText className="size-6" />
             </span>
-            <h2 className="mt-4 font-semibold">Factures</h2>
+            <h2 className="mt-4 font-semibold">Gestion Comptable</h2>
             <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-              Aucun module de facturation n’est actuellement exposé par l’API d’administration. Cette section est prête à recevoir les factures lorsqu’elles seront disponibles.
+              Cette section servira à la gestion comptable (production des états financiers)
             </p>
           </section>
         )}
