@@ -19,6 +19,7 @@ import {
   FileText,
   MessageSquare,
   Newspaper,
+  Globe,
   ShieldCheck,
   ScrollText,
   UserRound,
@@ -81,6 +82,7 @@ const nav = [
   {
     section: "CONTENU & COMMUNICATION",
     items: [
+      { label: "Gestion du site", href: "/site-content", icon: Globe },
       { label: "Notifications", href: "/notifications", icon: Bell },
       {
         label: "Messages",
