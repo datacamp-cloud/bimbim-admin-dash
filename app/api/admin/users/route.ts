@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     const q = request.nextUrl.searchParams.get('q')?.trim()
     const type = request.nextUrl.searchParams.get('type')
 
-    const typeFilter = type === 'partners' ? { type_client: 'entreprise' as const } : {}
+    const typeFilter = { type_client: type === 'partners' ? 'entreprise' as const : 'particulier' as const }
     const searchFilter = q
       ? {
           OR: [

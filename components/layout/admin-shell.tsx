@@ -19,6 +19,7 @@ import {
   FileText,
   MessageSquare,
   Newspaper,
+  Globe,
   ShieldCheck,
   ScrollText,
   UserRound,
@@ -67,20 +68,16 @@ const nav = [
     items: [
       {
         label: "Transactions",
-        href: "/settings?tab=transactions",
-        icon: Wallet,
-      },
-      {
-        label: "Retraits / Dépôts",
         href: "/settings?tab=wallet",
         icon: Wallet,
       },
-      { label: "Factures", href: "/settings?tab=invoices", icon: FileText },
+      { label: "Comptabilité", href: "/settings?tab=invoices", icon: FileText },
     ],
   },
   {
     section: "CONTENU & COMMUNICATION",
     items: [
+      { label: "Gestion du site", href: "/site-content", icon: Globe },
       { label: "Notifications", href: "/notifications", icon: Bell },
       {
         label: "Messages",
