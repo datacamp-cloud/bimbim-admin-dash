@@ -16,7 +16,6 @@ import {
 } from 'lucide-react'
 import { AdminShell } from '@/components/layout/admin-shell'
 import { AdminUsersManager } from '@/components/settings/admin-users-manager'
-import { SiteContentManager } from '@/components/settings/site-content-manager'
 
 type PayTransaction = {
   id: number | string
@@ -202,7 +201,6 @@ function SettingsPageContent() {
 
             {preferencesError && <p role="alert" className="text-sm text-danger">{preferencesError}</p>}
             <SaveButton saved={saved} onClick={save} />
-            {admin?.role === 'super_admin' && <SiteContentManager />}
           </>
         )}
 
