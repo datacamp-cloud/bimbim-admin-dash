@@ -33,6 +33,29 @@ export function SiteContentManager() {
     setDraft({ key: item.key, section: item.section, title: item.title ?? '', body: item.body ?? '', image_url: item.image_url ?? '', button_label: item.button_label ?? '', button_url: item.button_url ?? '', enabled: item.enabled, sort_order: item.sort_order })
   }
 
+  async function uploadImage(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    if (!file) return
+    setBusy(true); setError(''); setNotice('')
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const response = await fetch('/api/admin/site-content/upload', {
+        method: 'POST',
+        body: formData,
+      })
+      const payload = await response.json()
+      if (!response.ok) throw new Error(payload.error || "Envoi de l'image impossible.")
+      setDraft(current => ({ ...current, image_url: payload.data.url }))
+      setNotice('Image envoyée. Enregistrez le contenu pour appliquer le changement.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Envoi de l'image impossible.")
+    } finally {
+      setBusy(false)
+      event.target.value = ''
+    }
+  }
+
   async function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setBusy(true); setError(''); setNotice('')
@@ -75,7 +98,13 @@ export function SiteContentManager() {
         </div>
         <input value={draft.title} onChange={e => setDraft({ ...draft, title: e.target.value })} placeholder="Titre" className="rounded-lg border border-border bg-card px-3 py-2 text-sm" />
         <textarea rows={3} value={draft.body} onChange={e => setDraft({ ...draft, body: e.target.value })} placeholder="Texte / description" className="rounded-lg border border-border bg-card px-3 py-2 text-sm" />
-        <input type="text" value={draft.image_url} onChange={e => setDraft({ ...draft, image_url: e.target.value })} placeholder="URL HTTPS de l'image" className="rounded-lg border border-border bg-card px-3 py-2 text-sm" />
+        <div className="grid gap-2 rounded-lg border border-border p-3">
+          <label className="text-sm font-medium">Image de la section</label>
+          <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" disabled={busy} onChange={uploadImage} className="block w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-2 file:text-primary-foreground" />
+          <p className="text-xs text-muted-foreground">JPG, PNG, WebP ou GIF · 5 Mo maximum. L'image est stockée dans Vercel Blob.</p>
+          <input type="url" value={draft.image_url} onChange={e => setDraft({ ...draft, image_url: e.target.value })} placeholder="Ou collez une URL HTTPS d'image" className="rounded-lg border border-border bg-card px-3 py-2 text-sm" />
+          {draft.image_url && <div className="flex items-center gap-3"><img src={draft.image_url} alt="Aperçu de l'image" className="size-20 rounded-lg border border-border object-cover" /><button type="button" disabled={busy} onClick={() => setDraft({ ...draft, image_url: '' })} className="text-sm text-danger">Retirer l'image</button></div>}
+        </div>
         <div className="grid gap-3 md:grid-cols-2">
           <input value={draft.button_label} onChange={e => setDraft({ ...draft, button_label: e.target.value })} placeholder="Texte du bouton" className="rounded-lg border border-border bg-card px-3 py-2 text-sm" />
           <input value={draft.button_url} onChange={e => setDraft({ ...draft, button_url: e.target.value })} placeholder="Lien du bouton" className="rounded-lg border border-border bg-card px-3 py-2 text-sm" />
