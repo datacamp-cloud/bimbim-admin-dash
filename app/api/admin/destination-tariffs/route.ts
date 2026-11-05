@@ -57,6 +57,7 @@ export async function PATCH(request: Request) {
     };
     const zoneId = Number(body.zoneId);
     const montant = Number(body.montant);
+    const actif = body.actif;
 
     if (
       !Number.isSafeInteger(zoneId) ||
@@ -64,7 +65,7 @@ export async function PATCH(request: Request) {
       !Number.isSafeInteger(montant) ||
       montant < 1 ||
       montant > 10_000_000 ||
-      typeof body.actif !== "boolean"
+      typeof actif !== "boolean"
     ) {
       return NextResponse.json(
         { error: "Données invalides. Le tarif doit être un montant entier positif en FCFA." },
@@ -83,7 +84,7 @@ export async function PATCH(request: Request) {
       });
       const saved = await tx.tarifDestination.upsert({
         where: { zone_id: zoneId },
-        create: { zone_id: zoneId, montant, actif: body.actif as boolean },
+        create: { zone_id: zoneId, montant, actif },
         update: { montant, actif: body.actif as boolean },
       });
 
@@ -96,7 +97,7 @@ export async function PATCH(request: Request) {
           ancienne_valeur: previous
             ? { montant: Number(previous.montant), actif: previous.actif }
             : { montant: null, actif: null },
-          nouvelle_valeur: { montant, actif: body.actif },
+          nouvelle_valeur: { montant, actif },
         },
       });
 
