@@ -94,6 +94,7 @@ const nav = [
   {
     section: "PARAMÈTRES",
     items: [
+      { label: "Tarifs des zones", href: "/tarifs", icon: MapPin },
       { label: "Paramètres généraux", href: "/settings", icon: Settings },
       { label: "Sécurité", href: "/settings?tab=security", icon: ShieldCheck },
       { label: "Logs système", href: "/settings?tab=logs", icon: ScrollText },
