@@ -490,6 +490,8 @@ model Livraison {
   service                Service         @relation(fields: [service_id], references: [id])
   adresse_ramassage      String          @db.Text
   adresse_livraison      String          @db.Text
+  zone_destination_id    Int?
+  zone_destination       Zone?           @relation(fields: [zone_destination_id], references: [id], onDelete: SetNull)
   observation            String?         @db.Text
   poids                  Decimal?        @db.Decimal(10, 2)
   volume                 Decimal?        @db.Decimal(10, 2)
@@ -678,6 +680,8 @@ model Zone {
 
   tarifs_zones_depart  TarifZone[] @relation("ZoneDepart")
   tarifs_zones_arrivee TarifZone[] @relation("ZoneArrivee")
+  tarif_destination    TarifDestination?
+  livraisons_destination Livraison[]
 
   @@map("zones")
 }
@@ -697,6 +701,16 @@ model TarifZone {
   actif           Boolean   @default(true)
 
   @@map("tarifs_zones")
+}
+
+model TarifDestination {
+  id      Int     @id @default(autoincrement())
+  zone_id Int     @unique
+  zone    Zone    @relation(fields: [zone_id], references: [id], onDelete: Cascade)
+  montant Decimal @default(1000) @db.Decimal(10, 2)
+  actif   Boolean @default(true)
+
+  @@map("tarifs_destinations")
 }
 
 model PositionLivreur {
