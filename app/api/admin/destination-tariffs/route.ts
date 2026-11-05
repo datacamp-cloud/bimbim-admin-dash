@@ -85,7 +85,7 @@ export async function PATCH(request: Request) {
       const saved = await tx.tarifDestination.upsert({
         where: { zone_id: zoneId },
         create: { zone_id: zoneId, montant, actif },
-        update: { montant, actif: body.actif as boolean },
+        update: { montant, actif },
       });
 
       await tx.auditAction.create({
