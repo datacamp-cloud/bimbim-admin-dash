@@ -517,6 +517,7 @@ model Livraison {
   annulations                      AnnulationLivraison[]
   tentatives                       TentativeLivraison[]
 
+  @@index([zone_destination_id])
   @@map("livraisons")
 }
 
