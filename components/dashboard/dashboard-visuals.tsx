@@ -23,7 +23,7 @@ export function DashboardCharts({
         chart = new Chart(ref.current, {
           type: "doughnut",
           data: {
-            labels: ["Livrées", "En cours", "En attente", "Annulées"],
+            labels: ["Commandes terminées", "En cours", "En attente", "Annulées"],
             datasets: [
               {
                 data: [
