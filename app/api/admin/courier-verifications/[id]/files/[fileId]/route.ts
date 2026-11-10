@@ -18,6 +18,12 @@ export async function GET(
     return NextResponse.json({ error: "Identifiant coursier invalide." }, { status: 400 })
   }
 
+  const blobToken = process.env.BIMBIM_PRIVATE_BLOB_READ_WRITE_TOKEN?.trim()
+  if (!blobToken) {
+    console.error("BIMBIM_PRIVATE_BLOB_READ_WRITE_TOKEN is not configured")
+    return NextResponse.json({ error: "Le stockage privé des documents n'est pas configuré." }, { status: 503 })
+  }
+
   try {
     const courier = await prisma.livreur.findFirst({
       where: { id: courierId, documents: { some: {} } },
@@ -41,10 +47,15 @@ export async function GET(
     if (!pathname || !filename || (!isSelfie && !expectedMimeType)) {
       return NextResponse.json({ error: "Fichier introuvable." }, { status: 404 })
     }
-    const blob = await get(pathname, { access: "private" })
-    if (!blob || !blob.stream) return NextResponse.json({ error: "Fichier introuvable." }, { status: 404 })
+
+    // Use the public site's private Blob token, not the admin CMS media token.
+    const blob = await get(pathname, { access: "private", token: blobToken })
+    if (!blob || blob.statusCode !== 200 || !blob.stream) {
+      return NextResponse.json({ error: "Fichier introuvable dans le stockage privé." }, { status: 404 })
+    }
+
     const mimeType = expectedMimeType || blob.blob.contentType
-    if (!["image/jpeg", "image/png", "image/webp", "application/pdf"].includes(mimeType)) {
+    if (!mimeType || !["image/jpeg", "image/png", "image/webp", "application/pdf"].includes(mimeType)) {
       return NextResponse.json({ error: "Type de fichier non autorisé." }, { status: 415 })
     }
 
