@@ -41,10 +41,6 @@ export async function GET(
     if (!pathname || !filename || (!isSelfie && !expectedMimeType)) {
       return NextResponse.json({ error: "Fichier introuvable." }, { status: 404 })
     }
-    if (!["image/jpeg", "image/png", "image/webp", "application/pdf"].includes(mimeType)) {
-      return NextResponse.json({ error: "Type de fichier non autorisé." }, { status: 415 })
-    }
-
     const blob = await get(pathname, { access: "private" })
     if (!blob || !blob.stream) return NextResponse.json({ error: "Fichier introuvable." }, { status: 404 })
     const mimeType = expectedMimeType || blob.blob.contentType
