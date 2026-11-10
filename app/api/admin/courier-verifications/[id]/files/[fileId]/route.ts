@@ -36,9 +36,9 @@ export async function GET(
     const document = courier.documents[0]
     const pathname = isSelfie ? courier.photo : document?.chemin_fichier
     const filename = isSelfie ? "selfie-coursier" : document?.nom_fichier
-    const mimeType = isSelfie ? "image/jpeg" : document?.mime_type
+    const expectedMimeType = isSelfie ? null : document?.mime_type
 
-    if (!pathname || !filename || !mimeType) {
+    if (!pathname || !filename || (!isSelfie && !expectedMimeType)) {
       return NextResponse.json({ error: "Fichier introuvable." }, { status: 404 })
     }
     if (!["image/jpeg", "image/png", "image/webp", "application/pdf"].includes(mimeType)) {
@@ -47,6 +47,10 @@ export async function GET(
 
     const blob = await get(pathname, { access: "private" })
     if (!blob || !blob.stream) return NextResponse.json({ error: "Fichier introuvable." }, { status: 404 })
+    const mimeType = expectedMimeType || blob.blob.contentType
+    if (!["image/jpeg", "image/png", "image/webp", "application/pdf"].includes(mimeType)) {
+      return NextResponse.json({ error: "Type de fichier non autorisé." }, { status: 415 })
+    }
 
     const safeFilename = filename.replace(/[\\r\\n"]/g, "_")
     return new Response(blob.stream, {
