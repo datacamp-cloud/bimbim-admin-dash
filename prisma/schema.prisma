@@ -447,8 +447,27 @@ model Livreur {
   retours_livraisons    RetourLivraison[]
   tentatives_livraisons TentativeLivraison[]
   positions             PositionLivreur[]
+  documents             LivreurDocument[]
 
   @@map("livreurs")
+}
+
+
+model LivreurDocument {
+  id             Int      @id @default(autoincrement())
+  livreur_id     Int
+  livreur        Livreur  @relation(fields: [livreur_id], references: [id], onDelete: Cascade)
+  type_document  String   @db.VarChar(50)
+  nom_fichier    String   @db.VarChar(255)
+  chemin_fichier String   @db.VarChar(500)
+  mime_type      String   @db.VarChar(100)
+  taille         Int
+  statut         String   @default("en_attente") @db.VarChar(20)
+  date_creation  DateTime @default(now()) @db.Timestamp(3)
+  date_maj       DateTime @default(now()) @updatedAt @db.Timestamp(3)
+
+  @@index([livreur_id])
+  @@map("livreur_documents")
 }
 
 model Commande {
