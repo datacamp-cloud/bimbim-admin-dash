@@ -10,8 +10,6 @@ import {
   Users,
   CircleDollarSign,
   ArrowRight,
-  Star,
-  MapPinned,
   Wallet,
   Activity,
   ArrowUpRight,
@@ -153,7 +151,7 @@ export function DashboardOverview() {
   );
 
   const repartition = Object.entries({
-    terminee: "Livrées",
+    terminee: "Terminées",
     en_cours: "En cours",
     en_attente: "En attente",
     annulee: "Annulées",
@@ -228,11 +226,16 @@ export function DashboardOverview() {
   const walletTransactions = data.recentTransactions.slice(0, 3).map((tx) => ({
     label:
       tx.type_transaction === "credit"
-        ? "Dépôt par partenaire"
+        ? "Crédit de portefeuille"
         : tx.type_transaction === "debit"
-          ? "Retrait vers compte"
-          : "Frais de service",
-    amount: Number(tx.montant),
+          ? "Retrait"
+          : tx.type_transaction === "commission"
+            ? "Commission"
+            : tx.type_transaction === "bonus"
+              ? "Bonus"
+              : "Ajustement",
+    type: tx.type_transaction,
+    amount: Math.abs(Number(tx.montant)),
     date: new Date(tx.date_operation).toLocaleString("fr-FR", {
       day: "2-digit",
       month: "2-digit",
@@ -388,12 +391,7 @@ export function DashboardOverview() {
                           </div>
                           <div>
                             <div className="font-medium">{row.courier || "—"}</div>
-                            {row.rating && (
-                              <div className="flex items-center gap-1 text-[10px] text-amber-500">
-                                <Star className="size-3 fill-current" />
-                                {row.rating}
-                              </div>
-                            )}
+
                           </div>
                         </div>
                       </td>
@@ -464,16 +462,17 @@ export function DashboardOverview() {
               <p className="mb-2 text-xs font-semibold uppercase tracking-[0.1em] text-foreground">Transactions récentes</p>
               <div className="space-y-2">
                 {walletTransactions.map((item, index) => {
-                  const isPositive = item.amount > 0;
+                  const isCredit = item.type === "credit";
+                  const isDebit = item.type === "debit";
                   return (
                     <div key={`${item.label}-${index}`} className="flex items-center justify-between rounded-xl border border-border bg-muted/20 px-3 py-2">
                       <div className="min-w-0">
                         <div className="truncate text-sm font-medium">{item.label}</div>
                         <div className="text-[11px] text-foreground">{item.date}</div>
                       </div>
-                      <div className={cn("flex items-center gap-1 text-sm font-semibold", isPositive ? "text-green-600" : "text-red-600")}>
-                        {isPositive ? <ArrowUpRight className="size-3.5" /> : <ArrowDownRight className="size-3.5" />}
-                        {money(Math.abs(item.amount))}
+                      <div className={cn("flex items-center gap-1 text-sm font-semibold", isCredit ? "text-green-700" : isDebit ? "text-red-700" : "text-primary")}>
+                        {isCredit ? <ArrowUpRight className="size-3.5" /> : isDebit ? <ArrowDownRight className="size-3.5" /> : <Activity className="size-3.5" />}
+                        {isCredit ? "+" : isDebit ? "−" : ""}{money(item.amount)}
                       </div>
                     </div>
                   );
