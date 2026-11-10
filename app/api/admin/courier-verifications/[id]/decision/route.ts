@@ -61,6 +61,11 @@ export async function PATCH(
         select: { id: true, statut_compte: true },
       })
 
+      await tx.livreurDocument.updateMany({
+        where: { livreur_id: id },
+        data: { statut: decision === "valider" ? "verifie" : "rejete" },
+      })
+
       await tx.auditAction.create({
         data: {
           admin_id: session.sub,
