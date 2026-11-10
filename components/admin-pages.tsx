@@ -102,7 +102,7 @@ function UsersPageContent() {
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Nom, email ou téléphone..." className="w-full rounded-xl border border-border bg-background py-2.5 pl-10 pr-3 text-sm outline-none" />
           </div>
         </div>
-        <div className="hidden border-b border-border bg-muted/30 px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground md:grid md:grid-cols-[1.5fr_1.3fr_1fr_100px]">
+        <div className="hidden border-b border-border bg-muted/40 px-5 py-3 text-xs font-bold uppercase tracking-wide text-foreground md:grid md:grid-cols-[1.5fr_1.3fr_1fr_100px]">
           <span>Compte</span><span>Email</span><span>Livraisons</span><span>Statut</span>
         </div>
         {loading ? (
@@ -118,11 +118,11 @@ function UsersPageContent() {
                 <div className="flex min-w-0 items-center gap-3">
                   <Avatar initials={(u.name ?? u.nom ?? '?').split(' ').map((x: string) => x[0]).join('').slice(0, 2)} />
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{u.name ?? u.nom ?? 'Sans nom'}</p>
-                    <p className="mt-0.5 truncate text-xs text-muted-foreground">{u.telephone ?? 'Téléphone non renseigné'}</p>
+                    <p className="truncate text-sm font-semibold text-foreground">{u.name ?? u.nom ?? 'Sans nom'}</p>
+                    <p className="mt-0.5 truncate text-xs text-foreground">{u.telephone ?? 'Téléphone non renseigné'}</p>
                   </div>
                 </div>
-                <span className="truncate text-sm text-muted-foreground">{u.email ?? '—'}</span>
+                <span className="truncate text-sm text-foreground">{u.email ?? '—'}</span>
                 <span className="text-sm">{u.deliveries ?? 0}</span>
                 <StatusBadge status={u.statut} />
               </button>
