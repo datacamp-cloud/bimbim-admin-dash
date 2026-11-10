@@ -103,7 +103,7 @@ export function DashboardCharts({
         <div className="absolute bottom-0 left-0 right-0 grid grid-cols-2 gap-2 text-[10px]">
           <span className="flex items-center gap-1.5">
             <i className="size-2 rounded-full bg-[#C58A2A]" />
-            Livrées <b className="ml-auto">{data?.terminee ?? 0}</b>
+            Terminées <b className="ml-auto">{data?.terminee ?? 0}</b>
           </span>
           <span className="flex items-center gap-1.5">
             <i className="size-2 rounded-full bg-[#5D9AD2]" />
