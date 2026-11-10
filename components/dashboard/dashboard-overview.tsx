@@ -28,6 +28,7 @@ type Data = {
     livreurs: number;
     commandes: number;
     livraisons: number;
+    totalLivraisons: number;
     pendingReturns: number;
     onlineLivreurs: number;
     activeCouriers: number;
@@ -45,6 +46,7 @@ type Data = {
     date: string;
     client: string;
     livraisons: number;
+    livraisonsTerminees: number;
     courier?: string;
   }[];
   recentTransactions: {
@@ -81,16 +83,6 @@ type Data = {
 
 const money = (n: number) =>
   new Intl.NumberFormat("fr-FR").format(Math.round(n)) + " FCFA";
-const status = (s: string) =>
-  ({
-    en_attente: "En attente",
-    en_cours: "En cours",
-    livre: "Livrée",
-    retour: "Retour",
-    echec: "Échec",
-    terminee: "Terminée",
-  })[s] ?? s;
-
 export function DashboardOverview() {
   const [data, setData] = useState<Data | null>(null);
   const [error, setError] = useState("");
@@ -118,7 +110,7 @@ export function DashboardOverview() {
   if (!data)
     return (
       <AdminShell title="Dashboard" subtitle="">
-        <div className="p-10 text-center text-sm text-muted-foreground">
+        <div className="p-10 text-center text-sm text-foreground">
           Chargement des données...
         </div>
       </AdminShell>
@@ -184,22 +176,9 @@ export function DashboardOverview() {
   });
 
   const recentRows = data.recentOrders.slice(0, 5).map((order) => {
-    const tone =
-      order.statut === "terminee"
-        ? "success"
-        : order.statut === "en_cours"
-          ? "warning"
-          : order.statut === "en_attente"
-            ? "muted"
-            : "danger";
-    const percent =
-      order.statut === "terminee"
-        ? 100
-        : order.statut === "en_cours"
-          ? 60
-          : order.statut === "en_attente"
-            ? 30
-            : 0;
+    const percent = order.livraisons > 0
+      ? Math.round((order.livraisonsTerminees / order.livraisons) * 100)
+      : 0;
 
     return {
       id: `#BM-${String(order.id).padStart(4, "0")}`,
@@ -210,10 +189,9 @@ export function DashboardOverview() {
         minute: "2-digit",
       }),
       deliveries: order.livraisons,
+      delivered: order.livraisonsTerminees,
       courier: order.courier || "—",
-      rating: null,
       percent,
-      tone,
       orderId: order.id,
     };
   });
@@ -226,19 +204,16 @@ export function DashboardOverview() {
       : "—";
   const performance = [
     {
-      label: "Temps moyen de livraison",
+      label: "Durée moyenne d'un segment terminé",
       value: averageDelivery != null ? `${Math.floor(averageDelivery / 60)}h${String(averageDelivery % 60).padStart(2, "0")}` : "—",
       delta: deliveryDelta,
-    },
-    {
-      label: "Taux d'acceptation",
-      value: `${data.performance.acceptanceRate}%`,
-      delta: data.performance.previousAcceptanceRate ? `${data.performance.acceptanceRate - data.performance.previousAcceptanceRate >= 0 ? "+" : ""}${data.performance.acceptanceRate - data.performance.previousAcceptanceRate}%` : "—",
+      tone: averageDelivery != null && previousAverage != null && averageDelivery <= previousAverage ? "good" : "bad",
     },
     {
       label: "Note moyenne",
       value: data.performance.rating ? `${data.performance.rating.toFixed(1)}/5` : "—",
       delta: data.performance.previousRating ? `${data.performance.rating - data.performance.previousRating >= 0 ? "+" : ""}${(data.performance.rating - data.performance.previousRating).toFixed(1)}` : "—",
+      tone: data.performance.rating >= data.performance.previousRating ? "good" : "bad",
     },
     {
       label: "Livraisons terminées",
@@ -246,6 +221,7 @@ export function DashboardOverview() {
       delta: data.performance.previousCompletedDeliveries
         ? `${data.performance.completedDeliveries - data.performance.previousCompletedDeliveries >= 0 ? "+" : ""}${Math.round(((data.performance.completedDeliveries - data.performance.previousCompletedDeliveries) / data.performance.previousCompletedDeliveries) * 100)}%`
         : "—",
+      tone: data.performance.completedDeliveries >= data.performance.previousCompletedDeliveries ? "good" : "bad",
     },
   ];
 
@@ -265,15 +241,6 @@ export function DashboardOverview() {
     }),
   }));
 
-  const trips = (data.recentOrders ?? []).slice(0, 3).map((order, index) => ({
-    id: `#CR-${String(order.id).padStart(4, "0")}`,
-    type: ["PICK", "SWITCH", "DROP"][index] ?? "PICK",
-    deliveries: order.livraisons || 1,
-    courier: order.courier || "—",
-    recipient: order.client || "—",
-    status: order.statut === "terminee" ? "Terminé" : order.statut === "en_cours" ? "En cours" : "À venir",
-  }));
-
   const returnRows = (data.returns ?? []).slice(0, 3).map((item) => ({
     id: `#RT-${String(item.id).padStart(4, "0")}`,
     date: new Date(item.date).toLocaleString("fr-FR", {
@@ -287,33 +254,16 @@ export function DashboardOverview() {
     tone: item.statut === "valide" ? "success" : item.statut === "en_attente" ? "muted" : "warning",
   }));
 
-  const mapPoints = (data.positions ?? []).slice(0, 20).map((point) => ({
-    ...point,
-    status:
-      point.status === "en_cours"
-        ? "en_cours"
-        : point.status === "a_venir"
-          ? "a_venir"
-          : point.status === "retour"
-            ? "retour"
-            : "terminee",
-  }));
+  const mapPoints = (data.positions ?? []).slice(0, 50);
 
   const peakDay = data.dailyOrders.reduce<{ label: string; value: number } | null>((max, day) => {
     if (!max || day.value > max.value) return day;
     return max;
   }, null);
 
-  const mapCounts = {
-    en_cours: mapPoints.filter((point) => point.status === "en_cours").length,
-    a_venir: mapPoints.filter((point) => point.status === "a_venir").length,
-    terminee: mapPoints.filter((point) => point.status === "terminee").length,
-    retour: mapPoints.filter((point) => point.status === "retour").length,
-  };
-
   return (
     <AdminShell title="Dashboard" subtitle="Vue réelle des données Bimbim.">
-      <div className="space-y-6">
+      <div className="space-y-8">
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
           {kpis.map(([label, value, Icon, tone]) => (
             <div
@@ -328,7 +278,7 @@ export function DashboardOverview() {
               >
                 <Icon className="size-4" />
               </span>
-              <p className="mt-4 text-xs text-muted-foreground">{label}</p>
+              <p className="mt-4 text-xs text-foreground">{label}</p>
               <p className="mt-1 text-2xl font-bold">
                 {typeof value === "number"
                   ? value.toLocaleString("fr-FR")
@@ -342,8 +292,8 @@ export function DashboardOverview() {
           <section className="rounded-2xl border border-border bg-card p-4">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="font-semibold">Répartition des commandes</h3>
-              <span className="rounded-full bg-muted px-2 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
-                Ce mois
+              <span className="rounded-full bg-muted px-2 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-foreground">
+                30 derniers jours
               </span>
             </div>
             <DashboardCharts type="donut" data={data.orders30d} total={totalCommandes} />
@@ -352,11 +302,11 @@ export function DashboardOverview() {
                 <div key={item.label} className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
                     <span className={cn("size-2.5 rounded-full", item.color)} />
-                    <span className="text-muted-foreground">{item.label}</span>
+                    <span className="text-foreground">{item.label}</span>
                   </div>
                   <div className="flex items-center gap-2 font-medium">
                     <span>{item.pct}%</span>
-                    <span className="text-muted-foreground">→ {item.count}</span>
+                    <span className="text-foreground">→ {item.count}</span>
                   </div>
                 </div>
               ))}
@@ -366,12 +316,12 @@ export function DashboardOverview() {
           <section className="rounded-2xl border border-border bg-card p-4">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="font-semibold">Évolution des commandes</h3>
-              <span className="rounded-full bg-muted px-2 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
-                Cette semaine
+              <span className="rounded-full bg-muted px-2 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-foreground">
+                7 derniers jours
               </span>
             </div>
             <DashboardCharts type="line" data={data.orders30d} daily={data.dailyOrders} />
-            <div className="mt-2 flex items-center justify-between rounded-xl bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+            <div className="mt-2 flex items-center justify-between rounded-xl bg-muted/40 px-3 py-2 text-xs text-foreground">
               <span>Pic visible</span>
               <span className="font-medium text-foreground">
                 {peakDay ? `${peakDay.label} → ${peakDay.value} commandes` : "Aucune donnée"}
@@ -381,28 +331,23 @@ export function DashboardOverview() {
 
           <section className="rounded-2xl border border-border bg-card p-4">
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="font-semibold">Livraisons du jour</h3>
-              <span className="rounded-full bg-muted px-2 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
-                Aujourd'hui
+              <h3 className="font-semibold">Dernières positions des coursiers</h3>
+              <span className="rounded-full bg-muted px-2 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-foreground">
+                GPS
               </span>
             </div>
             <div className="grid gap-3 md:grid-cols-[1fr_180px] xl:grid-cols-[1fr]">
               <DashboardMap positions={mapPoints} />
-              <div className="space-y-2 pt-1">
-                {[
-                  { label: "En cours", count: mapCounts.en_cours, color: "bg-orange-500" },
-                  { label: "À venir", count: mapCounts.a_venir, color: "bg-blue-500" },
-                  { label: "Terminées", count: mapCounts.terminee, color: "bg-green-500" },
-                  { label: "Retours", count: mapCounts.retour, color: "bg-violet-500" },
-                ].map((item) => (
-                  <div key={item.label} className="flex items-center justify-between rounded-xl border border-border bg-muted/30 px-3 py-2 text-sm">
-                    <div className="flex items-center gap-2">
-                      <span className={cn("inline-block size-2.5 rounded-full", item.color)} />
-                      <span className="text-muted-foreground">{item.label}</span>
-                    </div>
-                    <span className="font-semibold">{item.count}</span>
-                  </div>
-                ))}
+              <div className="space-y-3 pt-2 text-sm">
+                <div className="rounded-xl border border-border bg-muted/30 p-3">
+                  <p className="font-medium text-foreground">Positions enregistrées</p>
+                  <p className="mt-1 text-2xl font-bold">{mapPoints.length}</p>
+                </div>
+                <div className="rounded-xl border border-border bg-muted/30 p-3">
+                  <p className="font-medium text-foreground">Coursiers disponibles</p>
+                  <p className="mt-1 text-2xl font-bold">{data.counters.onlineLivreurs}</p>
+                </div>
+                <p className="text-xs leading-5 text-foreground">La carte affiche les dernières coordonnées GPS enregistrées, pas une position en temps réel garantie.</p>
               </div>
             </div>
           </section>
@@ -418,13 +363,13 @@ export function DashboardOverview() {
             </div>
             <div className="overflow-x-auto">
               <table className="min-w-full text-left text-sm">
-                <thead className="bg-muted/30 text-xs uppercase tracking-[0.08em] text-muted-foreground">
+                <thead className="bg-muted/30 text-xs uppercase tracking-[0.08em] text-foreground">
                   <tr>
                     <th className="px-4 py-3">N° commande</th>
                     <th className="px-4 py-3">Date</th>
                     <th className="px-4 py-3">Livraisons</th>
                     <th className="px-4 py-3">Coursier</th>
-                    <th className="px-4 py-3">Taux de livraison</th>
+                    <th className="px-4 py-3">Livraisons terminées</th>
                     <th className="px-4 py-3">Action</th>
                   </tr>
                 </thead>
@@ -432,7 +377,7 @@ export function DashboardOverview() {
                   {recentRows.map((row) => (
                     <tr key={row.orderId} className="border-t border-border">
                       <td className="px-4 py-3 font-medium text-primary">{row.id}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{row.date}</td>
+                      <td className="px-4 py-3 text-foreground">{row.date}</td>
                       <td className="px-4 py-3">{row.deliveries} livraison{row.deliveries > 1 ? "s" : ""}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
@@ -458,14 +403,12 @@ export function DashboardOverview() {
                             <div
                               className={cn(
                                 "h-full rounded-full",
-                                row.tone === "success" && "bg-green-500",
-                                row.tone === "warning" && "bg-amber-500",
-                                row.tone === "danger" && "bg-red-500",
+                                "bg-primary",
                               )}
                               style={{ width: `${row.percent}%` }}
                             />
                           </div>
-                          <span className="text-xs font-medium">{row.percent}%</span>
+                          <span className="text-xs font-semibold text-foreground">{row.delivered}/{row.deliveries} ({row.percent}%)</span>
                         </div>
                       </td>
                       <td className="px-4 py-3">
@@ -485,15 +428,15 @@ export function DashboardOverview() {
 
           <section className="rounded-2xl border border-border bg-card p-4">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="font-semibold">Mes performances aujourd'hui</h3>
+              <h3 className="font-semibold">Indicateurs sur 30 jours</h3>
               <Link href="/settings?tab=transactions" className="text-xs font-semibold text-primary hover:underline">Voir plus <ArrowRight className="size-3.5 inline" /></Link>
             </div>
             <div className="space-y-3 text-sm">
               {performance.map((metric) => (
                 <div key={metric.label} className="rounded-xl border border-border bg-muted/20 p-3">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-muted-foreground">{metric.label}</span>
-                    <span className={cn("text-xs font-medium", metric.delta.startsWith("-") ? "text-red-500" : "text-green-500")}>{metric.delta}</span>
+                    <span className="font-medium text-foreground">{metric.label}</span>
+                    <span className={cn("text-xs font-semibold", metric.tone === "good" ? "text-green-700" : "text-red-700")}>{metric.delta}</span>
                   </div>
                   <div className="mt-2 flex items-end justify-between">
                     <span className="text-xl font-bold">{metric.value}</span>
@@ -513,13 +456,12 @@ export function DashboardOverview() {
               <Link href="/settings?tab=wallet" className="text-xs font-semibold text-primary hover:underline">Voir plus <ArrowRight className="size-3.5 inline" /></Link>
             </div>
             <p className="text-3xl font-bold text-foreground">{money(data.wallet.totalBalance)}</p>
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              <button className="rounded-xl bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground">+ Dépôt</button>
-              <button className="rounded-xl border border-border bg-background px-3 py-2 text-sm font-semibold">↑ Retrait</button>
-            </div>
+            <Link href="/settings?tab=wallet" className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-primary px-3 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90">
+              Gérer le portefeuille
+            </Link>
 
             <div className="mt-5">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">Transactions récentes</p>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.1em] text-foreground">Transactions récentes</p>
               <div className="space-y-2">
                 {walletTransactions.map((item, index) => {
                   const isPositive = item.amount > 0;
@@ -527,7 +469,7 @@ export function DashboardOverview() {
                     <div key={`${item.label}-${index}`} className="flex items-center justify-between rounded-xl border border-border bg-muted/20 px-3 py-2">
                       <div className="min-w-0">
                         <div className="truncate text-sm font-medium">{item.label}</div>
-                        <div className="text-[11px] text-muted-foreground">{item.date}</div>
+                        <div className="text-[11px] text-foreground">{item.date}</div>
                       </div>
                       <div className={cn("flex items-center gap-1 text-sm font-semibold", isPositive ? "text-green-600" : "text-red-600")}>
                         {isPositive ? <ArrowUpRight className="size-3.5" /> : <ArrowDownRight className="size-3.5" />}
@@ -549,7 +491,7 @@ export function DashboardOverview() {
             </div>
             <div className="overflow-hidden rounded-xl border border-border">
               <table className="min-w-full text-left text-xs">
-                <thead className="bg-muted/30 text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
+                <thead className="bg-muted/30 text-[10px] uppercase tracking-[0.08em] text-foreground">
                   <tr>
                     <th className="px-3 py-2">N° course</th>
                     <th className="px-3 py-2">Type</th>
@@ -570,14 +512,14 @@ export function DashboardOverview() {
                       <td className="px-3 py-2">{trip.deliveries}</td>
                       <td className="px-3 py-2">{trip.courier}</td>
                       <td className="px-3 py-2">{trip.recipient}</td>
-                      <td className="px-3 py-2 text-muted-foreground">{trip.status}</td>
+                      <td className="px-3 py-2 text-foreground">{trip.status}</td>
                       <td className="px-3 py-2">
                         <button className="inline-flex size-7 items-center justify-center rounded-full bg-primary/10 text-primary">&gt;</button>
                       </td>
                     </tr>
                   )) : (
                     <tr>
-                      <td colSpan={7} className="px-3 py-6 text-center text-sm text-muted-foreground">Aucune course en cours.</td>
+                      <td colSpan={7} className="px-3 py-6 text-center text-sm text-foreground">Aucune course en cours.</td>
                     </tr>
                   )}
                 </tbody>
@@ -592,7 +534,7 @@ export function DashboardOverview() {
             </div>
             <div className="overflow-hidden rounded-xl border border-border">
               <table className="min-w-full text-left text-xs">
-                <thead className="bg-muted/30 text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
+                <thead className="bg-muted/30 text-[10px] uppercase tracking-[0.08em] text-foreground">
                   <tr>
                     <th className="px-3 py-2">N° retour</th>
                     <th className="px-3 py-2">Date</th>
@@ -604,20 +546,20 @@ export function DashboardOverview() {
                   {returnRows.length > 0 ? returnRows.map((row) => (
                     <tr key={row.id} className="bg-background">
                       <td className="px-3 py-2 font-medium text-primary">{row.id}</td>
-                      <td className="px-3 py-2 text-muted-foreground">{row.date}</td>
+                      <td className="px-3 py-2 text-foreground">{row.date}</td>
                       <td className="px-3 py-2">{row.courier}</td>
                       <td className="px-3 py-2">
                         <span className={cn(
                           "rounded-full px-2 py-1 font-medium",
                           row.tone === "warning" && "bg-orange-100 text-orange-700",
-                          row.tone === "muted" && "bg-muted text-muted-foreground",
+                          row.tone === "muted" && "bg-muted text-foreground",
                           row.tone === "success" && "bg-green-100 text-green-700",
                         )}>{row.status}</span>
                       </td>
                     </tr>
                   )) : (
                     <tr>
-                      <td colSpan={4} className="px-3 py-6 text-center text-sm text-muted-foreground">Aucun retour de colis.</td>
+                      <td colSpan={4} className="px-3 py-6 text-center text-sm text-foreground">Aucun retour de colis.</td>
                     </tr>
                   )}
                 </tbody>
@@ -634,7 +576,7 @@ export function DashboardOverview() {
               </div>
               <div className="mt-5 space-y-3">
                 <h3 className="text-lg font-semibold">Colis retour</h3>
-                <p className="text-sm leading-6 text-muted-foreground">
+                <p className="text-sm leading-6 text-foreground">
                   Gérez les retours de colis depuis la livraison jusqu'à la réception.
                 </p>
               </div>
