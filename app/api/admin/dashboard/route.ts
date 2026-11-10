@@ -47,6 +47,7 @@ export async function GET() {
       activeCouriers,
       commandes,
       livraisons,
+      completedDeliveriesAllTime,
       pendingReturns,
       onlineLivreurs,
       globalWalletBalance,
@@ -77,6 +78,7 @@ export async function GET() {
       prisma.livreur.count({ where: { statut_compte: 'actif' } }),
       prisma.commande.count(),
       prisma.livraison.count(),
+      prisma.livraison.count({ where: { statut: 'livre' } }),
       prisma.retourLivraison.count({ where: { statut: 'en_attente' } }),
       prisma.livreur.count({ where: { disponibilite: true, statut_compte: 'actif' } }),
       prisma.wallet.aggregate({ _sum: { solde: true }, where: { statut: 'actif' } }),
@@ -124,9 +126,8 @@ export async function GET() {
           total_livraisons: true,
           client: { select: { nom: true } },
           livraisons: {
-            take: 1,
-            orderBy: { date_creation: 'asc' },
             select: {
+              statut: true,
               segments: {
                 take: 1,
                 orderBy: { ordre_segment: 'asc' },
@@ -260,7 +261,8 @@ export async function GET() {
         total: num(o.total_montant),
         date: o.date_creation.toISOString(),
         client: o.client?.nom ?? 'Client inconnu',
-        livraisons: o.total_livraisons,
+        livraisons: o.livraisons.length,
+        livraisonsTerminees: o.livraisons.filter((livraison) => livraison.statut === 'livre').length,
         courier: courier ? `${courier.prenom} ${courier.nom}` : undefined,
       }
     })
@@ -272,7 +274,8 @@ export async function GET() {
         livreurs,
         activeCouriers,
         commandes,
-        livraisons,
+        livraisons: completedDeliveriesAllTime,
+        totalLivraisons: livraisons,
         pendingReturns,
         onlineLivreurs,
       },
@@ -323,7 +326,7 @@ export async function GET() {
           id: p.id,
           latitude: num(p.latitude),
           longitude: num(p.longitude),
-          status: deliveryStatus ?? (p.statut_tracking === 'online' ? 'en_cours' : 'a_venir'),
+          status: p.statut_tracking,
           courier: `${p.livreur.prenom} ${p.livreur.nom}`,
         }
       }),
