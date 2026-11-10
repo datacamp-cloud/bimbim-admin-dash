@@ -28,6 +28,7 @@ function UsersPageContent() {
   const [data, setData] = useState<any[]>([])
   const [stats, setStats] = useState({ total: 0, actifs: 0, nouveaux: 0 })
   const [q, setQ] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [selected, setSelected] = useState<any>(null)
@@ -57,6 +58,7 @@ function UsersPageContent() {
       const url = new URL('/api/admin/users', window.location.origin)
       if (q.trim()) url.searchParams.set('q', q.trim())
       if (isPartnersPage) url.searchParams.set('type', 'partners')
+      if (statusFilter) url.searchParams.set('status', statusFilter)
       try {
         const response = await fetch(url.toString(), { cache: 'no-store', signal: controller.signal })
         const payload = await response.json()
@@ -79,7 +81,7 @@ function UsersPageContent() {
       controller.abort()
       clearTimeout(t)
     }
-  }, [q, isPartnersPage])
+  }, [q, isPartnersPage, statusFilter])
 
   return (
     <AdminShell title={isPartnersPage ? 'Partenaires' : 'Utilisateurs'} subtitle={isPartnersPage ? 'Clients entreprise enregistrés.' : 'Données clients issues de Neon.'}>
@@ -97,13 +99,21 @@ function UsersPageContent() {
       </div>
       <div className="mt-6 rounded-2xl border border-border bg-card overflow-hidden">
         <div className="border-b border-border p-5">
-          <div className="relative max-w-lg">
-            <Search className="absolute left-3 top-3 size-4 text-muted-foreground" />
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Nom, email ou téléphone..." className="w-full rounded-xl border border-border bg-background py-2.5 pl-10 pr-3 text-sm outline-none" />
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="relative w-full max-w-lg">
+              <Search className="absolute left-3 top-3 size-4 text-muted-foreground" />
+              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Nom, email ou téléphone..." className="w-full rounded-xl border border-border bg-background py-2.5 pl-10 pr-3 text-sm text-foreground outline-none" />
+            </div>
+            <select aria-label="Filtrer par statut" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="rounded-xl border border-border bg-background px-3 py-2.5 text-sm font-medium text-foreground">
+              <option value="">Tous les statuts</option>
+              <option value="actif">Actifs</option>
+              <option value="inactif">Inactifs</option>
+              <option value="bloque">Bloqués</option>
+            </select>
           </div>
         </div>
-        <div className="hidden border-b border-border bg-muted/40 px-5 py-3 text-xs font-bold uppercase tracking-wide text-foreground md:grid md:grid-cols-[1.5fr_1.3fr_1fr_100px]">
-          <span>Compte</span><span>Email</span><span>Livraisons</span><span>Statut</span>
+        <div className="hidden border-b border-border bg-muted/40 px-5 py-3 text-xs font-bold uppercase tracking-wide text-foreground md:grid md:grid-cols-[1.25fr_1.5fr_150px_100px]">
+          <span>Compte</span><span>Adresse</span><span>Nombre de livraisons</span><span>Statut</span>
         </div>
         {loading ? (
           <div className="p-10 text-center text-sm text-muted-foreground">Chargement...</div>
@@ -114,7 +124,7 @@ function UsersPageContent() {
         ) : (
           <div className="divide-y divide-border">
             {data.map((u) => (
-              <button type="button" key={u.id} onClick={() => void openDetails(u.id)} className="grid w-full gap-3 px-5 py-4 text-left hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring md:grid-cols-[1.5fr_1.3fr_1fr_100px] md:items-center">
+              <button type="button" key={u.id} onClick={() => void openDetails(u.id)} className="grid w-full gap-3 px-5 py-4 text-left hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring md:grid-cols-[1.25fr_1.5fr_150px_100px] md:items-center">
                 <div className="flex min-w-0 items-center gap-3">
                   <Avatar initials={(u.name ?? u.nom ?? '?').split(' ').map((x: string) => x[0]).join('').slice(0, 2)} />
                   <div className="min-w-0">
@@ -122,8 +132,8 @@ function UsersPageContent() {
                     <p className="mt-0.5 truncate text-xs text-foreground">{u.telephone ?? 'Téléphone non renseigné'}</p>
                   </div>
                 </div>
-                <span className="truncate text-sm text-foreground">{u.email ?? '—'}</span>
-                <span className="text-sm">{u.deliveries ?? 0}</span>
+                <span className="truncate text-sm text-foreground">{u.adresse ?? 'Adresse non renseignée'}</span>
+                <span className="text-sm font-semibold text-foreground">{u.deliveries ?? 0}</span>
                 <StatusBadge status={u.statut} />
               </button>
             ))}
