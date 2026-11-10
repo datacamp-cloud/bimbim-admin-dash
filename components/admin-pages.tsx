@@ -112,8 +112,8 @@ function UsersPageContent() {
             </select>
           </div>
         </div>
-        <div className="hidden border-b border-border bg-muted/40 px-5 py-3 text-xs font-bold uppercase tracking-wide text-foreground md:grid md:grid-cols-[1.25fr_1.5fr_150px_100px]">
-          <span>Compte</span><span>Adresse</span><span>Nombre de livraisons</span><span>Statut</span>
+        <div className="hidden border-b border-border bg-muted/40 px-5 py-3 text-xs font-bold uppercase tracking-wide text-foreground md:grid md:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)_190px_110px] md:gap-4">
+          <span>Compte</span><span>Adresse</span><span className="whitespace-nowrap">Nombre de livraisons</span><span className="whitespace-nowrap">Statut</span>
         </div>
         {loading ? (
           <div className="p-10 text-center text-sm text-muted-foreground">Chargement...</div>
@@ -124,7 +124,7 @@ function UsersPageContent() {
         ) : (
           <div className="divide-y divide-border">
             {data.map((u) => (
-              <button type="button" key={u.id} onClick={() => void openDetails(u.id)} className="grid w-full gap-3 px-5 py-4 text-left hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring md:grid-cols-[1.25fr_1.5fr_150px_100px] md:items-center">
+              <button type="button" key={u.id} onClick={() => void openDetails(u.id)} className="grid w-full gap-3 px-5 py-4 text-left hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring md:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)_190px_110px] md:gap-4 md:items-center">
                 <div className="flex min-w-0 items-center gap-3">
                   <Avatar initials={(u.name ?? u.nom ?? '?').split(' ').map((x: string) => x[0]).join('').slice(0, 2)} />
                   <div className="min-w-0">
