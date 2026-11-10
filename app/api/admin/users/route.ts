@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { ClientStatut, Prisma } from '@prisma/client'
 import prisma from '@/lib/prisma'
 import { getVerifiedAdminSession } from '@/lib/admin-auth'
 
@@ -13,19 +14,29 @@ export async function GET(request: NextRequest) {
     const type = request.nextUrl.searchParams.get('type')
     const status = request.nextUrl.searchParams.get('status')
 
-    const typeFilter = { type_client: type === 'partners' ? 'entreprise' as const : 'particulier' as const }
-    const searchFilter = q
+    const typeFilter: Prisma.ClientWhereInput = {
+      type_client: type === 'partners' ? 'entreprise' : 'particulier',
+    }
+    const searchFilter: Prisma.ClientWhereInput = q
       ? {
           OR: [
-            { nom: { contains: q, mode: 'insensitive' as const } },
-            { email: { contains: q, mode: 'insensitive' as const } },
+            { nom: { contains: q, mode: 'insensitive' } },
+            { email: { contains: q, mode: 'insensitive' } },
             { telephone: { contains: q } },
           ],
         }
       : {}
 
-    const statusFilter = status === 'actif' || status === 'inactif' || status === 'bloque' ? { statut: status } : {}
-    const where = { ...typeFilter, ...searchFilter, ...statusFilter }
+    const statusFilter: Prisma.ClientWhereInput =
+      status === 'actif' || status === 'inactif' || status === 'bloque'
+        ? { statut: status as ClientStatut }
+        : {}
+
+    const where: Prisma.ClientWhereInput = {
+      ...typeFilter,
+      ...searchFilter,
+      ...statusFilter,
+    }
 
     const [data, total, actifs, nouveaux] = await Promise.all([
       prisma.client.findMany({
@@ -41,11 +52,10 @@ export async function GET(request: NextRequest) {
           adresse_principale: true,
           statut: true,
           date_creation: true,
-          _count: { select: { livraisons_expediees: true } },
         },
       }),
       prisma.client.count({ where: typeFilter }),
-      prisma.client.count({ where: { ...typeFilter, statut: 'actif' } }),
+      prisma.client.count({ where: { ...typeFilter, statut: ClientStatut.actif } }),
       prisma.client.count({
         where: {
           ...typeFilter,
@@ -54,12 +64,24 @@ export async function GET(request: NextRequest) {
       }),
     ])
 
+    const deliveryCounts = data.length
+      ? await prisma.livraison.groupBy({
+          by: ['client_expediteur_id'],
+          where: { client_expediteur_id: { in: data.map((client) => client.id) } },
+          _count: { _all: true },
+        })
+      : []
+
+    const deliveryCountByClient = new Map(
+      deliveryCounts.map((item) => [item.client_expediteur_id, item._count._all]),
+    )
+
     return NextResponse.json({
       stats: { total, actifs, nouveaux },
       data: data.map((u) => ({
         ...u,
         name: u.nom ?? 'Sans nom',
-        deliveries: u._count.livraisons_expediees,
+        deliveries: deliveryCountByClient.get(u.id) ?? 0,
         adresse: u.adresse_principale,
         date_creation: u.date_creation.toISOString(),
       })),
