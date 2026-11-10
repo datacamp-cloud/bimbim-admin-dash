@@ -111,6 +111,7 @@ enum NomEngin {
 enum StatutCompteLivreur {
   actif
   en_verification
+  rejete
   suspendu
   inactif
 }
