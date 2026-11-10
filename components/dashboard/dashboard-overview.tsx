@@ -207,13 +207,13 @@ export function DashboardOverview() {
       label: "Durée moyenne d'un segment terminé",
       value: averageDelivery != null ? `${Math.floor(averageDelivery / 60)}h${String(averageDelivery % 60).padStart(2, "0")}` : "—",
       delta: deliveryDelta,
-      tone: averageDelivery != null && previousAverage != null && averageDelivery <= previousAverage ? "good" : "bad",
+      tone: averageDelivery == null || previousAverage == null ? "neutral" : averageDelivery <= previousAverage ? "good" : "bad",
     },
     {
       label: "Note moyenne",
       value: data.performance.rating ? `${data.performance.rating.toFixed(1)}/5` : "—",
       delta: data.performance.previousRating ? `${data.performance.rating - data.performance.previousRating >= 0 ? "+" : ""}${(data.performance.rating - data.performance.previousRating).toFixed(1)}` : "—",
-      tone: data.performance.rating >= data.performance.previousRating ? "good" : "bad",
+      tone: !data.performance.previousRating ? "neutral" : data.performance.rating >= data.performance.previousRating ? "good" : "bad",
     },
     {
       label: "Livraisons terminées",
@@ -221,7 +221,7 @@ export function DashboardOverview() {
       delta: data.performance.previousCompletedDeliveries
         ? `${data.performance.completedDeliveries - data.performance.previousCompletedDeliveries >= 0 ? "+" : ""}${Math.round(((data.performance.completedDeliveries - data.performance.previousCompletedDeliveries) / data.performance.previousCompletedDeliveries) * 100)}%`
         : "—",
-      tone: data.performance.completedDeliveries >= data.performance.previousCompletedDeliveries ? "good" : "bad",
+      tone: !data.performance.previousCompletedDeliveries ? "neutral" : data.performance.completedDeliveries >= data.performance.previousCompletedDeliveries ? "good" : "bad",
     },
   ];
 
@@ -436,7 +436,7 @@ export function DashboardOverview() {
                 <div key={metric.label} className="rounded-xl border border-border bg-muted/20 p-3">
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-medium text-foreground">{metric.label}</span>
-                    <span className={cn("text-xs font-semibold", metric.tone === "good" ? "text-green-700" : "text-red-700")}>{metric.delta}</span>
+                    <span className={cn("text-xs font-semibold", metric.tone === "good" ? "text-green-700" : metric.tone === "bad" ? "text-red-700" : "text-foreground")}>{metric.delta}</span>
                   </div>
                   <div className="mt-2 flex items-end justify-between">
                     <span className="text-xl font-bold">{metric.value}</span>
@@ -483,101 +483,54 @@ export function DashboardOverview() {
           </section>
         </div>
 
-        <div className="grid gap-4 xl:grid-cols-3">
-          <section className="rounded-2xl border border-border bg-card p-4">
+        <div className="grid gap-4 xl:grid-cols-2">
+          <section className="rounded-2xl border border-border bg-card p-5">
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="font-semibold">Courses en cours</h3>
-              <Link href="/deliveries" className="text-xs font-semibold text-primary hover:underline">Voir toutes <ArrowRight className="size-3.5 inline" /></Link>
+              <h3 className="font-semibold">Retours de colis</h3>
+              <Link href="/deliveries?view=returns" className="text-xs font-semibold text-primary hover:underline">Voir tous les retours <ArrowRight className="size-3.5 inline" /></Link>
             </div>
-            <div className="overflow-hidden rounded-xl border border-border">
-              <table className="min-w-full text-left text-xs">
-                <thead className="bg-muted/30 text-[10px] uppercase tracking-[0.08em] text-foreground">
+            <div className="overflow-x-auto rounded-xl border border-border">
+              <table className="min-w-full text-left text-sm">
+                <thead className="bg-muted/30 text-xs font-semibold uppercase tracking-[0.08em] text-foreground">
                   <tr>
-                    <th className="px-3 py-2">N° course</th>
-                    <th className="px-3 py-2">Type</th>
-                    <th className="px-3 py-2">Livraison(s)</th>
-                    <th className="px-3 py-2">Coursier</th>
-                    <th className="px-3 py-2">Destinataire</th>
-                    <th className="px-3 py-2">Statut</th>
-                    <th className="px-3 py-2">Suivi</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {trips.length > 0 ? trips.map((trip) => (
-                    <tr key={trip.id} className="bg-background">
-                      <td className="px-3 py-2 font-medium text-primary">{trip.id}</td>
-                      <td className="px-3 py-2">
-                        <span className="rounded-full bg-muted px-2 py-1 font-medium text-[10px]">{trip.type}</span>
-                      </td>
-                      <td className="px-3 py-2">{trip.deliveries}</td>
-                      <td className="px-3 py-2">{trip.courier}</td>
-                      <td className="px-3 py-2">{trip.recipient}</td>
-                      <td className="px-3 py-2 text-foreground">{trip.status}</td>
-                      <td className="px-3 py-2">
-                        <button className="inline-flex size-7 items-center justify-center rounded-full bg-primary/10 text-primary">&gt;</button>
-                      </td>
-                    </tr>
-                  )) : (
-                    <tr>
-                      <td colSpan={7} className="px-3 py-6 text-center text-sm text-foreground">Aucune course en cours.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          <section className="rounded-2xl border border-border bg-card p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="font-semibold">Retour de colis</h3>
-              <Link href="/deliveries?view=returns" className="text-xs font-semibold text-primary hover:underline">Voir toutes <ArrowRight className="size-3.5 inline" /></Link>
-            </div>
-            <div className="overflow-hidden rounded-xl border border-border">
-              <table className="min-w-full text-left text-xs">
-                <thead className="bg-muted/30 text-[10px] uppercase tracking-[0.08em] text-foreground">
-                  <tr>
-                    <th className="px-3 py-2">N° retour</th>
-                    <th className="px-3 py-2">Date</th>
-                    <th className="px-3 py-2">Coursier</th>
-                    <th className="px-3 py-2">Statut</th>
+                    <th className="px-3 py-3">N° retour</th>
+                    <th className="px-3 py-3">Date</th>
+                    <th className="px-3 py-3">Coursier</th>
+                    <th className="px-3 py-3">Statut</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
                   {returnRows.length > 0 ? returnRows.map((row) => (
-                    <tr key={row.id} className="bg-background">
-                      <td className="px-3 py-2 font-medium text-primary">{row.id}</td>
-                      <td className="px-3 py-2 text-foreground">{row.date}</td>
-                      <td className="px-3 py-2">{row.courier}</td>
-                      <td className="px-3 py-2">
+                    <tr key={row.id}>
+                      <td className="px-3 py-3 font-semibold text-primary">{row.id}</td>
+                      <td className="px-3 py-3">{row.date}</td>
+                      <td className="px-3 py-3">{row.courier}</td>
+                      <td className="px-3 py-3">
                         <span className={cn(
-                          "rounded-full px-2 py-1 font-medium",
-                          row.tone === "warning" && "bg-orange-100 text-orange-700",
+                          "rounded-full px-2 py-1 text-xs font-semibold",
+                          row.tone === "warning" && "bg-orange-100 text-orange-800",
                           row.tone === "muted" && "bg-muted text-foreground",
-                          row.tone === "success" && "bg-green-100 text-green-700",
+                          row.tone === "success" && "bg-green-100 text-green-800",
                         )}>{row.status}</span>
                       </td>
                     </tr>
                   )) : (
-                    <tr>
-                      <td colSpan={4} className="px-3 py-6 text-center text-sm text-foreground">Aucun retour de colis.</td>
-                    </tr>
+                    <tr><td colSpan={4} className="px-3 py-8 text-center text-sm text-foreground">Aucun retour de colis.</td></tr>
                   )}
                 </tbody>
               </table>
             </div>
           </section>
 
-          <section className="rounded-2xl border border-border bg-card p-4">
+          <section className="rounded-2xl border border-border bg-card p-5">
             <div className="flex h-full flex-col justify-between">
-              <div className="flex items-center justify-between">
-                <div className="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                  <Package className="size-6" />
-                </div>
+              <div className="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                <Package className="size-6" />
               </div>
               <div className="mt-5 space-y-3">
-                <h3 className="text-lg font-semibold">Colis retour</h3>
+                <h3 className="text-lg font-semibold">Gestion des retours</h3>
                 <p className="text-sm leading-6 text-foreground">
-                  Gérez les retours de colis depuis la livraison jusqu'à la réception.
+                  Consultez les colis retournés, leurs motifs et les décisions de validation depuis le suivi des livraisons.
                 </p>
               </div>
               <Link href="/deliveries?view=returns" className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-3 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
@@ -586,7 +539,6 @@ export function DashboardOverview() {
             </div>
           </section>
         </div>
-
         <div className="flex justify-end">
           <button
             onClick={load}
