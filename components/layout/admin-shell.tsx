@@ -39,6 +39,7 @@ const nav = [
     items: [
       { label: "Partenaires", href: "/users?type=partners", icon: Users },
       { label: "Coursiers", href: "/coursiers", icon: Truck },
+      { label: "Vérification des dossiers", href: "/verification-coursiers", icon: ShieldCheck },
       { label: "Utilisateurs", href: "/users", icon: UserRound },
     ],
   },
