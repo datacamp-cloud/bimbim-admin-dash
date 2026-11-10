@@ -97,6 +97,9 @@ export function CoursiersModule() {
             </div>
           </div>
 
+          <div className="hidden border-b border-border bg-muted/40 px-5 py-3 text-xs font-bold uppercase tracking-wide text-foreground md:grid md:grid-cols-[1.5fr_1fr_100px_90px]">
+            <span>Coursier</span><span>Zone</span><span>Statut</span><span>Note</span>
+          </div>
           {loading ? (
             <div className="p-10 text-center text-sm text-muted-foreground">Chargement...</div>
           ) : error ? (
@@ -106,16 +109,15 @@ export function CoursiersModule() {
           ) : (
             <div className="divide-y divide-border">
               {data.map((c) => (
-                <div key={c.id} className="grid gap-3 px-5 py-4 md:grid-cols-[1.5fr_1fr_1fr_100px_90px] md:items-center">
+                <div key={c.id} className="grid gap-3 px-5 py-4 md:grid-cols-[1.5fr_1fr_100px_90px] md:items-center">
                   <div className="flex items-center gap-3">
                     <Avatar initials={c.initials} />
                     <div>
-                      <p className="text-sm font-medium">{c.name}</p>
-                      <p className="text-xs text-muted-foreground">{c.phone}</p>
+                      <p className="text-sm font-semibold text-foreground">{c.name}</p>
+                      <p className="text-xs text-foreground">{c.phone}</p>
                     </div>
                   </div>
-                  <span className="text-sm">{c.vehicle}</span>
-                  <span className="text-sm text-muted-foreground">{c.zone}</span>
+                  <span className="text-sm text-foreground">{c.zone || '—'}</span>
                   <StatusBadge status={c.status} />
                   <span className="flex items-center gap-1 text-sm">
                     <Star className="size-3.5 fill-warning text-warning" />
