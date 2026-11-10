@@ -321,7 +321,6 @@ export async function GET() {
         statut: r.statut,
       })),
       positions: positions.map(p => {
-        const deliveryStatus = p.livreur.segments_destinataire[0]?.livraison.statut
         return {
           id: p.id,
           latitude: num(p.latitude),
