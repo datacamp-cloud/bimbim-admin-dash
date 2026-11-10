@@ -75,8 +75,7 @@ export function DashboardCharts({
             scales: {
               y: {
                 beginAtZero: true,
-                max: 200,
-                ticks: { stepSize: 50, font: { size: 9 } },
+                ticks: { precision: 0, font: { size: 10 } },
                 grid: { color: "#E7EBF2" },
               },
               x: { grid: { display: false }, ticks: { font: { size: 9 } } },
@@ -99,7 +98,7 @@ export function DashboardCharts({
           <span className="text-xl font-bold text-foreground">
             {(total ?? 0).toLocaleString("fr-FR")}
           </span>
-          <span className="text-[10px] text-muted-foreground">commandes</span>
+          <span className="text-[10px] text-foreground">commandes</span>
         </div>
         <div className="absolute bottom-0 left-0 right-0 grid grid-cols-2 gap-2 text-[10px]">
           <span className="flex items-center gap-1.5">
@@ -156,14 +155,7 @@ export function DashboardMap({
         maxZoom: 19,
       }).addTo(map);
       positions.forEach((p) => {
-        const color =
-          p.status === "en_cours"
-            ? "#F59E0B"
-            : p.status === "a_venir"
-              ? "#4589D2"
-              : p.status === "retour"
-                ? "#8B5CF6"
-                : "#27804D";
+        const color = p.status === "online" ? "#27804D" : "#64748B";
         L.circleMarker([p.latitude, p.longitude], {
           radius: 7,
           color: "#fff",
@@ -172,7 +164,7 @@ export function DashboardMap({
           fillOpacity: 0.95,
         })
           .addTo(map)
-          .bindTooltip(p.courier);
+          .bindTooltip(`${p.courier} — ${p.status === "online" ? "En ligne" : "Hors ligne"}`);
       });
     });
     return () => {
