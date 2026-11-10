@@ -11,6 +11,7 @@ export async function GET(request: NextRequest) {
   try {
     const q = request.nextUrl.searchParams.get('q')?.trim()
     const type = request.nextUrl.searchParams.get('type')
+    const status = request.nextUrl.searchParams.get('status')
 
     const typeFilter = { type_client: type === 'partners' ? 'entreprise' as const : 'particulier' as const }
     const searchFilter = q
@@ -23,7 +24,8 @@ export async function GET(request: NextRequest) {
         }
       : {}
 
-    const where = { ...typeFilter, ...searchFilter }
+    const statusFilter = status === 'actif' || status === 'inactif' || status === 'bloque' ? { statut: status } : {}
+    const where = { ...typeFilter, ...searchFilter, ...statusFilter }
 
     const [data, total, actifs, nouveaux] = await Promise.all([
       prisma.client.findMany({
@@ -36,6 +38,7 @@ export async function GET(request: NextRequest) {
           nom: true,
           email: true,
           telephone: true,
+          adresse_principale: true,
           statut: true,
           date_creation: true,
           _count: { select: { livraisons_expediees: true } },
@@ -57,6 +60,7 @@ export async function GET(request: NextRequest) {
         ...u,
         name: u.nom ?? 'Sans nom',
         deliveries: u._count.livraisons_expediees,
+        adresse: u.adresse_principale,
         date_creation: u.date_creation.toISOString(),
       })),
     })
